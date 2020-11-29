@@ -1,30 +1,27 @@
 #!/usr/bin/python3
 
-from serial import Serial
+from Communicator import Communicator
 import sys
+import time
 
+path = sys.argv[1]
 try:
-  porta = sys.argv[1]
-except:
-  print('Uso: %s porta_serial' % sys.argv[0])
-  sys.exit(0)
-
-try:
-  p = Serial(porta, 9600)
+    c = Communicator(path, 9600)
 except Exception as e:
-  print('Não conseguiu acessar a porta serial', e)
-  sys.exit(0)
+    print('Não conseguiu acessar a porta serial', e)
+    sys.exit(0)
 
-msg = 'ameliza elisa camilla ...\r\n'
-msg = msg.encode('ascii')
-
-n = p.write(msg)
-print(msg)
-
-print('Enviou %d bytes' % n)
-
-print('Digite ENTER para terminar:', end='')
-sys.stdout.flush()
-sys.stdin.readline()
+i = 0
+while(True):
+    msg = 'ameliza elisa camilla ...\r\n'
+    c.transmitter(msg)
+    msg = ''
+    while(True):
+        msg += c.receiver()
+        if(msg[len(msg)-1] == '\n'):
+            break
+    print('final msg: ', msg.encode('ascii'), ' ', i)
+    i = i+1
+    time.sleep(1)
 
 sys.exit(0)
