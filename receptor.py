@@ -16,7 +16,16 @@ except Exception as e:
   sys.exit(0)
 
 # recebe até 128 caracteres
-msg = p.read(14)
-print('Recebeu: ', msg)
+n = 0
+msg = ''
 
+while(True):
+	msg += p.read().decode()
+	if(msg[len(msg)-1]=='\n'):
+		break;
+	
+
+print('final msg: ', msg.encode('ascii'))
+#if(msg(len(msg)).decode()=='\n'):
+		
 sys.exit(0)

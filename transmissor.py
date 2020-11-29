@@ -15,10 +15,11 @@ except Exception as e:
   print('Não conseguiu acessar a porta serial', e)
   sys.exit(0)
 
-msg = 'um teste ...\r\n'
+msg = 'ameliza elisa camilla ...\r\n'
+msg = msg.encode('ascii')
 
-n = p.write(msg.encode('ascii'))
-print(msg.encode('ascii'))
+n = p.write(msg)
+print(msg)
 
 print('Enviou %d bytes' % n)
 
