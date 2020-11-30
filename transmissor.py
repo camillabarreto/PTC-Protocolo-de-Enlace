@@ -3,6 +3,7 @@
 from Communicator import Communicator
 import sys
 import time
+import asyncio
 
 path = sys.argv[1]
 try:

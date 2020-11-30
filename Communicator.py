@@ -10,23 +10,21 @@ class Communicator:
         self.path = path
         self.rate = rate
         try:
-            self.p = Serial(self.path, self.rate)
+            self.serial = Serial(self.path, self.rate)
         except Exception as e:
             print('Não conseguiu acessar a porta serial', e)
             sys.exit(0)
 
     def transmitter(self, msg):
         msg = msg.encode('ascii')
-        n = self.p.write(msg)
+        n = self.serial.write(msg)
         print(msg)
 
         print('Enviou %d bytes' % n)
-        #print('Digite ENTER para terminar:', end='')
         sys.stdout.flush()
-        # sys.stdin.readline()
 
-    def receiver(self) -> string:
+    def receiver(self):
         # recebe até 128 caracteres
         msg = ''
-        msg = self.p.read().decode()
+        msg = self.serial.read().decode()
         return msg
