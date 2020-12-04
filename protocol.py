@@ -4,19 +4,23 @@ import poller
 import sys
 import time
 from poller import Callback
-from Communicator import Communicator
+#from Communicator import Communicator
 from serial import Serial
 
 
 class CallbackStdin(poller.Callback):
 
-    def __init__(self, tout, c):
+    def __init__(self, tout, serial):
         Callback.__init__(self, sys.stdin, tout)
 
     def handle(self):
         msg = sys.stdin.readline()
-        c.transmitter(msg)
-        #print('Lido:', l)
+        msg = msg.encode('ascii')
+        n = serial.write(msg)
+        print(msg)
+
+        print('Enviou %d bytes' % n)
+        # sys.stdout.flush()
 
     def handle_timeout(self):
         print('Timeout !')
@@ -27,11 +31,11 @@ class CallbackReception(poller.Callback):
     t0 = time.time()
 
     def __init__(self, tout, c):
-        poller.Callback.__init__(self, c.serial, tout)
+        poller.Callback.__init__(self, serial, tout)
 
     def handle(self):
         msg = ''
-        msg = c.receiver()
+        msg = serial.read().decode()
         print('msg: ', msg.encode('ascii'))
 
     def handle_timeout(self):
@@ -40,14 +44,15 @@ class CallbackReception(poller.Callback):
 
 if __name__ == '__main__':
     path = sys.argv[1]
+    rate = 9600
     try:
-        c = Communicator(path, 9600)
+        serial = Serial(path, rate)
     except Exception as e:
         print('Não conseguiu acessar a porta serial', e)
         sys.exit(0)
 
-    cb = CallbackStdin(30, c)
-    rx = CallbackReception(35, c)
+    cb = CallbackStdin(50, serial)
+    rx = CallbackReception(50, serial)
     sched = poller.Poller()
 
     sched.adiciona(cb)
