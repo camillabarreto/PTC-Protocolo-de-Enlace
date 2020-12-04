@@ -25,20 +25,19 @@ class CallbackStdin(poller.Callback):
 
     def handle(self):  # Será um método def envia(self, msg) chamado pelo handle da Aplicação
         msg = sys.stdin.buffer.readline()  # Envia a msg para o Enquadramento para ele enviar pela porta serial
+        msg = msg[:-1] # Tirando o '/n' do final da mensagem lida
         frame = bytearray()
         frame.append(FLAG)  # FLAG de inicio
-        
-        print(type(msg))
 
         for byte in msg:
-            if (byte == 0x7E or byte == 0x7D):  # 7E -> 5E (^) / 7D -> ?(])
+            if (byte == FLAG or byte == ESC):  # 7E -> 5E (^) / 7D -> ?(])
                 xor = byte ^ 0x20
-                frame.append(0x7D)
+                frame.append(ESC)
                 frame.append(xor)
             else:
                 frame.append(byte)
 
-        frame.append(0x7E)  # FLAG de fim
+        frame.append(FLAG)  # FLAG de fim
         self.transmitter(frame)
 
     def handle_timeout(self):
