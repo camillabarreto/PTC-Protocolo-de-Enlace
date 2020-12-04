@@ -5,6 +5,14 @@ from poller import Callback
 from sublayer import Sublayer
 from serial import Serial
 
+# States
+IDLE = 0
+READ = 1
+ESCAPE = 2
+
+# Special
+FLAG = 0x7E  # ~
+ESC = 0x7D  # }
 
 class Framing(Sublayer):
 
@@ -33,8 +41,18 @@ class Framing(Sublayer):
     def envia(self, dados: bytes):
         # Apenas envia os dados pela serial
         # Este método é chamado pela subcamada superior
-        quadro = bytearray()
-        quadro.append(0x7e)
-        quadro += dados
-        quadro.append(0x7e)
-        self.dev.write(bytes(quadro))
+        
+        frame = bytearray()
+        frame.append(FLAG)  # FLAG de inicio
+
+        for byte in dados:
+            if (byte == FLAG or byte == ESC):  # 7E -> 5E (^) / 7D -> ?(])
+                xor = byte ^ 0x20
+                frame.append(ESC)
+                frame.append(xor)
+            else:
+                frame.append(byte)
+
+        frame.append(FLAG)  # FLAG de fim
+        self.dev.write(bytes(frame))
+
