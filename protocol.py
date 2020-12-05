@@ -47,28 +47,31 @@ class CallbackStdin(poller.Callback):
 
 
 class CallbackReception(poller.Callback):
-
     t0 = time.time()
     current_state = IDLE
 
     def __init__(self, tout, c):
         poller.Callback.__init__(self, serial, tout)
+        self.n = 0  # Quantidade de bytes recebidos
+        self.frame = bytearray()
 
     def handle(self):
-        msg = ''
-        msg = serial.read().decode()
-        print('Recebido: ', msg.encode('ascii'))
+        msg = serial.read()
+        msg = msg.hex()
+        msg = int(msg, 16)
 
         '''Descomentar a próxima linha para chamar a máquina de estados -> FSM(octeto)
            Os métodos correspondentes aos estados não estão implementados, existindo 
            apenas um fluxo de mudança de estado para visualizar o funcionamento da FSM.
         '''
-        # self.FSM(None)
+
+        frame = self.FSM(msg)
+        print('Recebido: ', frame)
 
     def handle_timeout(self):
         print('Timer: t=', time.time() - CallbackReception.t0)
 
-    def FSM(self, argument):
+    def FSM(self, byte):
         switch = {
             IDLE: self.idle,
             INIT: self.init,
@@ -76,54 +79,58 @@ class CallbackReception(poller.Callback):
             ESCAPE: self.escape
         }
         func = switch.get(self.current_state, lambda: None)
-        return func(argument)
+        return func(byte)
 
-    def idle(self, argument):
-        # se FLAG
-        self.current_state = INIT
-        print('idle -> init')
+    def idle(self, byte):
+        print('IDLE')
+        print(byte)
+        if (byte == FLAG):
+            self.n = 0
+            print('idle -> init')
+            self.current_state = INIT
 
-    def init(self, argument):
-        # se ESC
-        # self.current_state = ESCAPE
-
-        # se FLAG
-        # self.current_state = INIT
-
-        # se não
-        self.current_state = READ
-        # n++
+    def init(self, byte):
+        if (byte == FLAG):
+            self.current_state = INIT
+        elif (byte == ESC):
+            self.current_state = ESCAPE
+        else:
+            self.frame.append(byte)
+            self.n += 1
+            self.current_state = READ
 
         print('init -> read')
 
-    def read(self, argument):
-        # se ESC
-        # self.current_state = ESCAPE
+    def read(self, byte):
+        if (byte == FLAG):
+            self.current_state = IDLE
+            return self.frame
 
-        # se FLAG
-        self.current_state = IDLE
-        # return quadro
+        elif (byte == ESC):
+            self.current_state = ESCAPE
 
         # se TIMEOUT
-        # self.current_state = IDLE
         # descarta quadro
+        # self.current_state = IDLE
 
-        # se não
-        # self.current_state = READ
-        # n++
+        else:
+            self.frame.append(byte)
+            self.n += 1
+            self.current_state = READ
 
         print('read -> idle')
 
-    def escape(self, argument):
+    def escape(self, byte):
+        if (byte == FLAG):  # se FLAG ou TIMEOUT
+            self.frame.clear()
+            self.current_state = IDLE
 
-        # se FLAG ou TIMEOUT
-        # self.current_state = IDLE
-        # descarta quadro
-
-        # se não
-        # self.current_state = READ
-        # n++
-        print('escape')
+        else:
+            byte = byte ^ 0x20
+            self.frame.append(byte)
+            self.n += 1
+            print('escape')
+            self.current_state = READ
 
 
 if __name__ == '__main__':
