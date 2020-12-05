@@ -4,7 +4,6 @@ import poller
 import sys
 import time
 from poller import Callback
-# from Communicator import Communicator
 from serial import Serial
 
 # States
