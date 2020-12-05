@@ -14,45 +14,28 @@ ESCAPE = 2
 FLAG = 0x7E  # ~
 ESC = 0x7D  # }
 
+
 class Framing(Sublayer):
 
     def __init__(self, porta_serial: Serial, tout: float):
         Sublayer.__init__(self, porta_serial, tout)
-        # dev: este atributo mantém uma referência à porta serial
-        self.dev = porta_serial
-        # buffer: este atributo armazena octetos recebidos
-        self.buffer = bytearray()
+
+        # a conexão com as camadas adjacentes deve ser aqui?
 
     def handle(self):
-        # lê um octeto da serial, e o armazena no buffer
-        # Encaminha o buffer para camada superior, se ele tiver 8 octetos
-        octeto = self.dev.read(1)
-        self.buffer += octeto
-        if len(self.buffer) == 8:
-            # envia o conteúdo do buffer para a camada superior (self.upper)
-            self.upperLayer.recebe(bytes(self.buffer))
-            self.buffer.clear()
+        '''Trata o evento associado a este callback. Tipicamente 
+        deve-se ler o fileobj e processar os dados lidos'''
+        msg = self.fd.read()
+        print('Recebido ', msg)
 
     def handle_timeout(self):
-        # Limpa o buffer se ocorrer timeout
-        self.buffer.clear()
-        print('timeout no enquadramento em', self.timeout.time())
+        '''Trata um timeout associado a este callback'''
+        print('Framing: handle_timeout')
 
-    def envia(self, dados: bytes):
-        # Apenas envia os dados pela serial
-        # Este método é chamado pela subcamada superior
-        
-        frame = bytearray()
-        frame.append(FLAG)  # FLAG de inicio
+    def send(self, dados: bytes):
+        '''Trata o ENVIO de octetos para a camada superior'''
+        print('Framing: send')
 
-        for byte in dados:
-            if (byte == FLAG or byte == ESC):  # 7E -> 5E (^) / 7D -> ?(])
-                xor = byte ^ 0x20
-                frame.append(ESC)
-                frame.append(xor)
-            else:
-                frame.append(byte)
-
-        frame.append(FLAG)  # FLAG de fim
-        self.dev.write(bytes(frame))
-
+    def receive(self):
+        '''Trata o RECEBIMENTO de octetos da camada superior'''
+        print('Framing: receive')

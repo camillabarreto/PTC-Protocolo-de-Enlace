@@ -12,17 +12,19 @@ class Application(Sublayer):
     def __init__(self, porta_serial: Serial, tout: float):
         Sublayer.__init__(self, porta_serial, tout)
 
-    def recebe(self, dados: bytes):
-        # mostra na tela os dados recebidos da subcamada inferior
-        print('RX:', dados)
+        # a conexão com as camadas adjacentes deve ser aqui?
 
     def handle(self):
-        # lê uma linha do teclado
-        dados = sys.stdin.readline()
+        '''Trata o evento associado a este callback. Tipicamente 
+        deve-se ler o fileobj e processar os dados lidos'''
 
-        # converte para bytes ... necessário somente
-        # nesta aplicação de teste, que lê do terminal
-        dados = dados.encode('utf8')
+        l = sys.stdin.readline()
+        print('Lido:', l)
 
-        # envia os dados para a subcamada inferior (self.lower)
-        self.lowerLayer.envia(dados)
+    def send(self, dados: bytes):
+        '''Trata o ENVIO de octetos para a camada inferior'''
+        print('Application: send')
+
+    def receive(self):
+        '''Trata o RECEBIMENTO de octetos da camada inferior'''
+        print('Application: receive')
