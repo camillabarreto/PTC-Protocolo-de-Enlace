@@ -20,7 +20,8 @@ class Framing(Sublayer):
 
     def __init__(self, porta_serial: Serial, tout: float):
         Sublayer.__init__(self, porta_serial, tout)
-        self.frame = bytearray()
+        self.msg = bytearray()
+        self.disable_timeout()
         self.current_state = IDLE
         self.n = 0  # Quantidade de bytes recebidos
 
@@ -28,14 +29,16 @@ class Framing(Sublayer):
         '''Trata o evento associado a este callback. Tipicamente 
         deve-se ler o fileobj e processar os dados lidos'''
 
-        o = self.fd.read()
-        self.receive(o)
+        byte = self.fd.read()
+        self.receive(byte)
 
     def handle_timeout(self):
         '''Trata um timeout associado a este callback'''
         # Limpa o buffer se ocorrer timeout
-        self.frame.clear()
+        self.msg.clear()
+        self.current_state = IDLE
         print('Framing: handle_timeout')
+        self.disable_timeout()
 
     def send(self, msg):
         '''Recebe os octetos da camada superior, trata os dados
@@ -55,19 +58,19 @@ class Framing(Sublayer):
         self.fd.write(bytes(frame))
         print('Framing: send', frame)
 
-    def receive(self, msg):
+    def receive(self, byte):
         '''Recebe os octetos da porta serial, trata os dados
         e envia para a camada superior'''
-        msg = msg.hex()
-        msg = int(msg, 16)
+        byte = byte.hex()
+        byte = int(byte, 16)
 
-        result = self.FSM(msg)
+        result = self.FSM(byte)
 
         if (result != None):
             # envia o conteúdo lido para a camada superior
-            self.upperLayer.receive(bytes(self.frame))
-            print('Framing: receive', self.frame)
-            self.frame.clear()
+            self.upperLayer.receive(bytes(self.msg))
+            print('Framing: receive', self.msg)
+            self.msg.clear()
 
     def FSM(self, byte):
         switch = {
@@ -85,6 +88,7 @@ class Framing(Sublayer):
             self.n = 0
             print('idle -> init')
             self.current_state = INIT
+        self.enable_timeout()
 
     def init(self, byte):
 
@@ -93,39 +97,43 @@ class Framing(Sublayer):
         elif (byte == ESC):
             self.current_state = ESCAPE
         else:
-            self.frame.append(byte)
+            self.msg.append(byte)
             self.n += 1
             self.current_state = READ
             print('init -> read')
 
         # TIMEOUT -> descarta quadro
+        self.reload_timeout()
 
     def read(self, byte):
         if (byte == FLAG):
             self.current_state = IDLE
             print('read -> idle')
-            return self.frame
+            self.disable_timeout()
+            return self.msg
 
         elif (byte == ESC):
             self.current_state = ESCAPE
 
         else:
-            self.frame.append(byte)
+            self.msg.append(byte)
             self.n += 1
             self.current_state = READ
 
         # TIMEOUT ou OVERFLOW -> descarta quadro
+        self.reload_timeout()
 
     def escape(self, byte):
-        if (byte == FLAG):  # se FLAG ou TIMEOUT
-            self.frame.clear()
+        if (byte == FLAG or byte == ESC):  # FLAG ou ESC -> descarta quadro
+            self.msg.clear()
             self.current_state = IDLE
 
         else:
             byte = byte ^ 0x20
-            self.frame.append(byte)
+            self.msg.append(byte)
             self.n += 1
             print('escape')
             self.current_state = READ
 
-        # TIMEOUT ou FLAG ou ESC -> descarta quadro
+        # TIMEOUT -> descarta quadro
+        self.reload_timeout()

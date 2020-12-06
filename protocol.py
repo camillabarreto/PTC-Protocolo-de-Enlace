@@ -18,8 +18,8 @@ if __name__ == '__main__':
         print('Não conseguiu acessar a porta serial', e)
         sys.exit(0)
 
-    ap = Application(sys.stdin, 50)
-    fr = Framing(serial, 50)
+    ap = Application(sys.stdin, 1)
+    fr = Framing(serial, 1)
 
     ap.connect(fr, None)
     fr.connect(None, ap)
