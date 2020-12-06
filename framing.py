@@ -24,8 +24,6 @@ class Framing(Sublayer):
         self.current_state = IDLE
         self.n = 0  # Quantidade de bytes recebidos
 
-        # a conexão com as camadas adjacentes deve ser aqui?
-
     def handle(self):
         '''Trata o evento associado a este callback. Tipicamente 
         deve-se ler o fileobj e processar os dados lidos'''
@@ -66,7 +64,8 @@ class Framing(Sublayer):
         result = self.FSM(msg)
 
         if (result != None):
-            self.upperLayer.receive(bytes(self.frame))  # envia o conteúdo lido para a camada superior
+            # envia o conteúdo lido para a camada superior
+            self.upperLayer.receive(bytes(self.frame))
             print('Framing: receive', self.frame)
             self.frame.clear()
 
@@ -88,6 +87,7 @@ class Framing(Sublayer):
             self.current_state = INIT
 
     def init(self, byte):
+
         if (byte == FLAG):
             self.current_state = INIT
         elif (byte == ESC):
@@ -98,6 +98,8 @@ class Framing(Sublayer):
             self.current_state = READ
             print('init -> read')
 
+        # TIMEOUT -> descarta quadro
+
     def read(self, byte):
         if (byte == FLAG):
             self.current_state = IDLE
@@ -107,14 +109,12 @@ class Framing(Sublayer):
         elif (byte == ESC):
             self.current_state = ESCAPE
 
-        # se TIMEOUT
-        # descarta quadro
-        # self.current_state = IDLE
-
         else:
             self.frame.append(byte)
             self.n += 1
             self.current_state = READ
+
+        # TIMEOUT ou OVERFLOW -> descarta quadro
 
     def escape(self, byte):
         if (byte == FLAG):  # se FLAG ou TIMEOUT
@@ -127,3 +127,5 @@ class Framing(Sublayer):
             self.n += 1
             print('escape')
             self.current_state = READ
+
+        # TIMEOUT ou FLAG ou ESC -> descarta quadro
