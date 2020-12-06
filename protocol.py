@@ -21,6 +21,9 @@ if __name__ == '__main__':
     ap = Application(sys.stdin, 50)
     fr = Framing(serial, 50)
 
+    ap.connect(fr, None)
+    fr.connect(None, ap)
+
     sched = poller.Poller()
 
     sched.adiciona(ap)

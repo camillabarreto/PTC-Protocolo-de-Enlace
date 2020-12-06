@@ -33,9 +33,11 @@ class Framing(Sublayer):
         print('Framing: handle_timeout')
 
     def send(self, dados: bytes):
-        '''Trata o ENVIO de octetos para a camada superior'''
+        '''Recebe os octetos da camada superior, trata os dados
+        e envia para a porta serial'''
         print('Framing: send')
 
     def receive(self):
-        '''Trata o RECEBIMENTO de octetos da camada superior'''
+        '''Recebe os octetos da porta serial, trata os dados
+        e envia para a camada superior'''
         print('Framing: receive')

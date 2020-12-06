@@ -22,9 +22,11 @@ class Application(Sublayer):
         print('Lido:', l)
 
     def send(self, dados: bytes):
-        '''Trata o ENVIO de octetos para a camada inferior'''
+        '''Recebe os octetos do teclado, trata os dados
+        e envia para a camada inferior'''
         print('Application: send')
 
     def receive(self):
-        '''Trata o RECEBIMENTO de octetos da camada inferior'''
+        '''Recebe os octetos da camada inferior, trata os dados
+        e envia para o terminal'''
         print('Application: receive')
