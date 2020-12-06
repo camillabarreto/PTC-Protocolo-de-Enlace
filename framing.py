@@ -25,19 +25,21 @@ class Framing(Sublayer):
     def handle(self):
         '''Trata o evento associado a este callback. Tipicamente 
         deve-se ler o fileobj e processar os dados lidos'''
-        msg = self.fd.read()
-        print('Recebido ', msg)
+        o = self.fd.readline()
+        self.receive(o)
 
     def handle_timeout(self):
         '''Trata um timeout associado a este callback'''
         print('Framing: handle_timeout')
 
-    def send(self, dados: bytes):
+    def send(self, msg):
         '''Recebe os octetos da camada superior, trata os dados
         e envia para a porta serial'''
         print('Framing: send')
+        self.fd.write(msg)
 
-    def receive(self):
+    def receive(self, o):
         '''Recebe os octetos da porta serial, trata os dados
         e envia para a camada superior'''
         print('Framing: receive')
+        self.upperLayer.receive(o)

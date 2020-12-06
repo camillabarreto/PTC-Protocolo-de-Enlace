@@ -18,15 +18,17 @@ class Application(Sublayer):
         '''Trata o evento associado a este callback. Tipicamente 
         deve-se ler o fileobj e processar os dados lidos'''
 
-        l = sys.stdin.readline()
-        print('Lido:', l)
+        msg = sys.stdin.readline()
+        self.send(msg.encode('utf8'))
 
-    def send(self, dados: bytes):
+    def send(self, msg):
         '''Recebe os octetos do teclado, trata os dados
         e envia para a camada inferior'''
         print('Application: send')
+        self.lowerLayer.send(msg)
 
-    def receive(self):
+    def receive(self, o):
         '''Recebe os octetos da camada inferior, trata os dados
         e envia para o terminal'''
         print('Application: receive')
+        print('mensagem: ', o)
