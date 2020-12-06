@@ -18,8 +18,9 @@ class Application(Sublayer):
         '''Trata o evento associado a este callback. Tipicamente 
         deve-se ler o fileobj e processar os dados lidos'''
 
-        msg = sys.stdin.readline()
-        self.send(msg.encode('utf8'))
+        msg = sys.stdin.buffer.readline() # Lê em bytes
+        msg = msg[:-1]  # Tirando o '/n' do final da mensagem lida
+        self.send(msg)
 
     def send(self, msg):
         '''Recebe os octetos do teclado, trata os dados
@@ -32,3 +33,4 @@ class Application(Sublayer):
         e envia para o terminal'''
         print('Application: receive')
         print('mensagem: ', o)
+
