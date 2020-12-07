@@ -18,10 +18,7 @@ class Application(Sublayer):
 
         msg = sys.stdin.buffer.readline()  # Lê em bytes
         msg = msg[:-1]  # Tirando o '/n' do final da mensagem lida
-        if len(msg) < 129:
-            self.send(msg)
-        else:
-            print('Mensagem maior que 128 caracteres')
+        self.send(msg)
 
     def send(self, msg):
         '''Recebe os octetos do teclado, trata os dados
@@ -34,3 +31,4 @@ class Application(Sublayer):
         e envia para o terminal'''
         print('Application: receive')
         print('mensagem: ', msg)
+
