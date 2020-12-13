@@ -68,8 +68,6 @@ class Framing(Sublayer):
     def receive(self, byte):
         '''Recebe os octetos da porta serial, trata os dados
         e envia para a camada superior'''
-        byte = byte.hex()
-        byte = int(byte, 16)
     
         result = self.FSM(byte)
     
@@ -96,7 +94,7 @@ class Framing(Sublayer):
     
     def idle(self, byte):
         print('IDLE')
-        if (byte == FLAG):
+        if (byte[0] == FLAG):
             self.n = 0
             print('idle -> init')
             self.current_state = INIT
@@ -104,12 +102,12 @@ class Framing(Sublayer):
     
     
     def init(self, byte):
-        if (byte == FLAG):
+        if (byte[0] == FLAG):
             self.current_state = INIT
-        elif (byte == ESC):
+        elif (byte[0] == ESC):
             self.current_state = ESCAPE
         else:
-            self.msg.append(byte)
+            self.msg.append(byte[0])
             self.n += 1
             self.current_state = READ
             print('init -> read')
@@ -119,17 +117,17 @@ class Framing(Sublayer):
     
     
     def read(self, byte):
-        if (byte == FLAG):
+        if (byte[0] == FLAG):
             self.current_state = IDLE
             print('read -> idle')
             self.disable_timeout()
             return self.msg
     
-        elif (byte == ESC):
+        elif (byte[0] == ESC):
             self.current_state = ESCAPE
     
         else:
-            self.msg.append(byte)
+            self.msg.append(byte[0])
             self.n += 1
             self.current_state = READ
     
@@ -138,12 +136,12 @@ class Framing(Sublayer):
     
     
     def escape(self, byte):
-        if (byte == FLAG or byte == ESC):  # FLAG ou ESC -> descarta quadro
+        if (byte[0] == FLAG or byte[0] == ESC):  # FLAG ou ESC -> descarta quadro
             self.msg.clear()
             self.current_state = IDLE
     
         else:
-            byte = byte ^ 0x20
+            byte = byte[0] ^ 0x20
             self.msg.append(byte)
             self.n += 1
             print('escape')
