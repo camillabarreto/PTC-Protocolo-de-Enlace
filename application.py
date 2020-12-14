@@ -13,16 +13,11 @@ class Application(Sublayer):
         Sublayer.__init__(self, porta_serial, tout)
 
     def handle(self):
-        '''Trata o evento associado a este callback. Tipicamente 
-        deve-se ler o fileobj e processar os dados lidos'''
+        '''Recebe os octetos do teclado, trata os dados
+        e envia para a camada inferior'''
 
         msg = sys.stdin.buffer.readline()  # Lê em bytes
         msg = msg[:-1]  # Tirando o '/n' do final da mensagem lida
-        self.send(msg)
-
-    def send(self, msg):
-        '''Recebe os octetos do teclado, trata os dados
-        e envia para a camada inferior'''
         print('Application: send')
         self.lowerLayer.send(msg)
 

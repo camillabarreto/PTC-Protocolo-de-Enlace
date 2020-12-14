@@ -30,10 +30,22 @@ class Framing(Sublayer):
 
     def handle(self):
         '''Trata o evento associado a este callback. Tipicamente
-        deve-se ler o fileobj e processar os dados lidos'''
+        deve-se ler o fileobj e processar os dados lidos.
+        Recebe os octetos da porta serial, trata os dados
+        e envia para a camada superior
+        '''
 
         byte = self.fd.read()
-        self.receive(byte)
+        result = self.FSM(byte)
+
+        if (result != None):
+            if (self.n <= MAX_BYTES):  # Verifica se msg tem o tamanho adequado
+                self.upperLayer.receive(bytes(self.msg))  # envia o conteúdo lido para a camada superior
+                print('Framing: receive', self.msg)
+                self.msg.clear()
+            else:
+                print('OVERFLOW! A mensagem tem mais de ', MAX_BYTES, ' bytes.')
+                self.msg.clear()
 
     def handle_timeout(self):
         '''Trata um timeout associado a este callback'''
@@ -47,7 +59,7 @@ class Framing(Sublayer):
         '''Recebe os octetos da camada superior, trata os dados
         e envia para a porta serial'''
 
-        if (len(msg) <= MAX_BYTES): # Verifica se msg tem o tamanho adequado
+        if (len(msg) <= MAX_BYTES):  # Verifica se msg tem o tamanho adequado
             frame = bytearray()
             frame.append(FLAG)  # FLAG de inicio
 
@@ -65,22 +77,6 @@ class Framing(Sublayer):
         else:
             print('OVERFLOW! A mensagem tem mais de ', MAX_BYTES, ' bytes.')
 
-    def receive(self, byte):
-        '''Recebe os octetos da porta serial, trata os dados
-        e envia para a camada superior'''
-    
-        result = self.FSM(byte)
-    
-        if (result != None):
-            if (self.n <= MAX_BYTES):  # Verifica se msg tem o tamanho adequado
-                self.upperLayer.receive(bytes(self.msg))  # envia o conteúdo lido para a camada superior
-                print('Framing: receive', self.msg)
-                self.msg.clear()
-            else:
-                print('OVERFLOW! A mensagem tem mais de ', MAX_BYTES, ' bytes.')
-                self.msg.clear()
-    
-    
     def FSM(self, byte):
         switch = {
             IDLE: self.idle,
@@ -90,8 +86,7 @@ class Framing(Sublayer):
         }
         func = switch.get(self.current_state, lambda: None)
         return func(byte)
-    
-    
+
     def idle(self, byte):
         print('IDLE')
         if (byte[0] == FLAG):
@@ -99,8 +94,7 @@ class Framing(Sublayer):
             print('idle -> init')
             self.current_state = INIT
         self.enable_timeout()
-    
-    
+
     def init(self, byte):
         if (byte[0] == FLAG):
             self.current_state = INIT
@@ -111,41 +105,39 @@ class Framing(Sublayer):
             self.n += 1
             self.current_state = READ
             print('init -> read')
-    
+
         # TIMEOUT -> descarta quadro
         self.reload_timeout()
-    
-    
+
     def read(self, byte):
         if (byte[0] == FLAG):
             self.current_state = IDLE
             print('read -> idle')
             self.disable_timeout()
             return self.msg
-    
+
         elif (byte[0] == ESC):
             self.current_state = ESCAPE
-    
+
         else:
             self.msg.append(byte[0])
             self.n += 1
             self.current_state = READ
-    
+
         # TIMEOUT ou OVERFLOW -> descarta quadro
         self.reload_timeout()
-    
-    
+
     def escape(self, byte):
         if (byte[0] == FLAG or byte[0] == ESC):  # FLAG ou ESC -> descarta quadro
             self.msg.clear()
             self.current_state = IDLE
-    
+
         else:
             byte = byte[0] ^ 0x20
             self.msg.append(byte)
             self.n += 1
             print('escape')
             self.current_state = READ
-    
+
         # TIMEOUT -> descarta quadro
         self.reload_timeout()
