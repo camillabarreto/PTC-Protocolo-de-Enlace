@@ -4,6 +4,7 @@ import poller
 from poller import Callback
 from sublayer import Sublayer
 from serial import Serial
+import crc
 
 # States
 IDLE = 0
@@ -40,7 +41,8 @@ class Framing(Sublayer):
 
         if (result != None):
             if (self.n <= MAX_BYTES):  # Verifica se msg tem o tamanho adequado
-                self.upperLayer.receive(bytes(self.msg))  # envia o conteúdo lido para a camada superior
+                # envia o conteúdo lido para a camada superior
+                self.upperLayer.receive(bytes(self.msg))
                 print('Framing: receive', self.msg)
                 self.msg.clear()
             else:
@@ -58,6 +60,14 @@ class Framing(Sublayer):
     def send(self, msg):
         '''Recebe os octetos da camada superior, trata os dados
         e envia para a porta serial'''
+
+        # gerando crc antes do enquadramento
+        fcs = crc.CRC16(msg)
+        msg = fcs.gen_crc()
+        # GERAR ERROR PROPOSITAIS NA TRANSMISSÃO
+        # msg = msg[:-1] # remove o ultimo byte
+        # msg.reverse() # inverte os bytes
+        print('Mensagem com FCS:', msg)
 
         if (len(msg) <= MAX_BYTES):  # Verifica se msg tem o tamanho adequado
             frame = bytearray()
@@ -114,6 +124,14 @@ class Framing(Sublayer):
             self.current_state = IDLE
             print('read -> idle')
             self.disable_timeout()
+
+            # verificando crc após recebimento quadro completo
+            fcs = crc.CRC16(self.msg)
+            print('Resultado da verificação da mensagem com FCS:',
+                  fcs.check_crc())
+            if fcs.check_crc():
+                return self.msg
+
             return self.msg
 
         elif (byte[0] == ESC):
