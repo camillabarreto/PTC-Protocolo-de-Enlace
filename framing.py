@@ -67,6 +67,7 @@ class Framing(Sublayer):
         # GERAR ERROR PROPOSITAIS NA TRANSMISSÃO
         # msg = msg[:-1] # remove o ultimo byte
         # msg.reverse() # inverte os bytes
+        # msg[0] = 99  # alterando o primeiro byte
         print('Mensagem com FCS:', msg)
 
         if (len(msg) <= MAX_BYTES):  # Verifica se msg tem o tamanho adequado
