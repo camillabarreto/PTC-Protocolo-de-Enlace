@@ -22,5 +22,6 @@ class Application(Sublayer):
 
     def receive(self, msg):
         '''Recebe os octetos da camada inferior, trata os dados
-        e envia para o terminal'''
-        print('mensagem: ', msg)
+        e envia para o terminal '''
+        msg = msg[:-1]
+        print('mensagem: ', msg.decode('utf-8'))
