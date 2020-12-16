@@ -147,7 +147,7 @@ class Framing(Sublayer):
                     frame.append(byte)
 
             frame.append(FLAG)
-            self.fd.write(bytes(frame))
+            self.fd.write(bytes(frame)) # Envia mensagem pela porta serial
 
         else:
             print('OVERFLOW! A mensagem tem mais de ', MAX_BYTES, ' bytes.')
