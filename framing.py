@@ -116,6 +116,7 @@ class Framing(Sublayer):
             self.disable_timeout()
             fcs = crc.CRC16(self.msg)
             if fcs.check_crc():
+                self.msg = self.msg[:-2]
                 return self.msg
 
             return self.msg
