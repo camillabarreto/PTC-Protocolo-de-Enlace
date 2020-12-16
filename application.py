@@ -18,12 +18,9 @@ class Application(Sublayer):
 
         msg = sys.stdin.buffer.readline()  # Lê em bytes
         msg = msg[:-1]  # Tirando o '/n' do final da mensagem lida
-        print('Application: send')
         self.lowerLayer.send(msg)
 
     def receive(self, msg):
         '''Recebe os octetos da camada inferior, trata os dados
         e envia para o terminal'''
-        print('Application: receive')
         print('mensagem: ', msg)
-
