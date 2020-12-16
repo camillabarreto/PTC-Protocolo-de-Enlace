@@ -20,27 +20,30 @@ ESC = 0x7D  # }
 MAX_BYTES = 128
 
 
+'''A subcamada Framing é resposável por tratar as transmissões
+e recepções de octetos pela porta serial. Na transmissão (def send) 
+será anexado aos octetos um valor de FCS e realizado o enquadramento.
+Na recepção (def handle) será feito o desenquadramento, checagem da 
+integridade dos octetos e remoção do valor de FCS. A recepção será 
+interrompida quando atingir um limite de tempo (def handle_timeout)
+e os octetos serão descartados'''
+
+
 class Framing(Sublayer):
 
     def __init__(self, porta_serial: Serial, tout: float):
         Sublayer.__init__(self, porta_serial, tout)
-        self.msg = bytearray()
+        self.msg = bytearray()  # buffer
         self.disable_timeout()
         self.current_state = IDLE
-        self.n = 0
 
     def handle(self):
-        '''Trata o evento associado a este callback. Tipicamente
-        deve-se ler o fileobj e processar os dados lidos.
-        Recebe os octetos da porta serial, trata os dados
-        e envia para a camada superior
-        '''
+        byte = self.fd.read()  # Lendo 1 octeto da porta serial
+        result = self.FSM(byte)  # result = True, para recepção bem sucedida
 
-        byte = self.fd.read()
-        result = self.FSM(byte)
-
-        if (result != None):
-            if (self.n <= MAX_BYTES):
+        if (result):
+            print('tamanho da mensagem ', len(self.msg))
+            if (len(self.msg) <= MAX_BYTES):
                 self.upperLayer.receive(bytes(self.msg))
                 self.msg.clear()
             else:
@@ -53,9 +56,67 @@ class Framing(Sublayer):
         self.current_state = IDLE
         self.disable_timeout()
 
+    def FSM(self, byte):
+        switch = {
+            IDLE: self.idle,
+            INIT: self.init,
+            READ: self.read,
+            ESCAPE: self.escape
+        }
+        func = switch.get(self.current_state, lambda: None)
+        return func(byte)
+
+    def idle(self, byte):
+        if (byte[0] == FLAG):
+            self.current_state = INIT
+        self.enable_timeout()
+        return False
+
+    def init(self, byte):
+        if (byte[0] == FLAG):
+            self.current_state = INIT
+        elif (byte[0] == ESC):
+            self.current_state = ESCAPE
+        else:
+            self.msg.append(byte[0])
+            self.current_state = READ
+
+        self.reload_timeout()
+        return False
+
+    def read(self, byte):
+        if (byte[0] == FLAG):
+            self.current_state = IDLE
+            self.disable_timeout()
+            fcs = crc.CRC16(self.msg)
+            if fcs.check_crc():
+                self.msg = self.msg[:-2]
+                return True
+        elif (byte[0] == ESC):
+            self.current_state = ESCAPE
+        else:
+            self.msg.append(byte[0])
+            self.current_state = READ
+
+        self.reload_timeout()
+        return False
+
+    def escape(self, byte):
+        if (byte[0] == FLAG or byte[0] == ESC):
+            self.msg.clear()
+            self.current_state = IDLE
+
+        else:
+            byte = byte[0] ^ 0x20
+            self.msg.append(byte)
+            self.current_state = READ
+
+        self.reload_timeout()
+        return False
+
     def send(self, msg):
         '''Recebe os octetos da camada superior, trata os dados
-        e envia para a porta serial'''
+        e envia pela porta serial'''
 
         fcs = crc.CRC16(msg)
         msg = fcs.gen_crc()
@@ -81,65 +142,3 @@ class Framing(Sublayer):
             self.fd.write(bytes(frame))
         else:
             print('OVERFLOW! A mensagem tem mais de ', MAX_BYTES, ' bytes.')
-
-    def FSM(self, byte):
-        switch = {
-            IDLE: self.idle,
-            INIT: self.init,
-            READ: self.read,
-            ESCAPE: self.escape
-        }
-        func = switch.get(self.current_state, lambda: None)
-        return func(byte)
-
-    def idle(self, byte):
-        if (byte[0] == FLAG):
-            self.n = 0
-            self.current_state = INIT
-        self.enable_timeout()
-
-    def init(self, byte):
-        if (byte[0] == FLAG):
-            self.current_state = INIT
-        elif (byte[0] == ESC):
-            self.current_state = ESCAPE
-        else:
-            self.msg.append(byte[0])
-            self.n += 1
-            self.current_state = READ
-
-        self.reload_timeout()
-
-    def read(self, byte):
-        if (byte[0] == FLAG):
-            self.current_state = IDLE
-            self.disable_timeout()
-            fcs = crc.CRC16(self.msg)
-            if fcs.check_crc():
-                self.msg = self.msg[:-2]
-                return self.msg
-
-            return self.msg
-
-        elif (byte[0] == ESC):
-            self.current_state = ESCAPE
-
-        else:
-            self.msg.append(byte[0])
-            self.n += 1
-            self.current_state = READ
-
-        self.reload_timeout()
-
-    def escape(self, byte):
-        if (byte[0] == FLAG or byte[0] == ESC):
-            self.msg.clear()
-            self.current_state = IDLE
-
-        else:
-            byte = byte[0] ^ 0x20
-            self.msg.append(byte)
-            self.n += 1
-            self.current_state = READ
-
-        self.reload_timeout()
