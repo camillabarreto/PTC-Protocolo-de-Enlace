@@ -39,7 +39,7 @@ class Framing(Sublayer):
 
     def handle(self):
         byte = self.fd.read()  # Lendo 1 octeto da porta serial
-        result = self.FSM(byte)  # result = True, para recepção bem sucedida
+        result = self.FSM(byte)  # FSM retorna True para recepção bem sucedida
 
         if (result):
             print('tamanho da mensagem ', len(self.msg))
