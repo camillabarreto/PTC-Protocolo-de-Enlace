@@ -42,13 +42,13 @@ class Framing(Sublayer):
         result = self.FSM(byte)  # FSM retorna True para recepção bem sucedida
 
         if (result):
-            print('tamanho da mensagem ', len(self.msg))
             if (len(self.msg) <= MAX_BYTES):
-                self.upperLayer.receive(bytes(self.msg))
-                self.msg.clear()
+                self.upperLayer.receive(bytes(self.msg)) # Envia mensagem para subcamada superior
+
             else:
                 print('OVERFLOW! A mensagem tem mais de ', MAX_BYTES, ' bytes.')
-                self.msg.clear()
+
+            self.msg.clear()
 
     def handle_timeout(self):
         '''Trata um timeout associado a este callback'''
@@ -63,20 +63,24 @@ class Framing(Sublayer):
             READ: self.read,
             ESCAPE: self.escape
         }
-        func = switch.get(self.current_state, lambda: None)
+
+        func = switch.get(self.current_state, lambda: None) # Executa a função do estado atual
         return func(byte)
 
     def idle(self, byte):
         if (byte[0] == FLAG):
             self.current_state = INIT
+
         self.enable_timeout()
         return False
 
     def init(self, byte):
         if (byte[0] == FLAG):
             self.current_state = INIT
+
         elif (byte[0] == ESC):
             self.current_state = ESCAPE
+
         else:
             self.msg.append(byte[0])
             self.current_state = READ
@@ -89,11 +93,14 @@ class Framing(Sublayer):
             self.current_state = IDLE
             self.disable_timeout()
             fcs = crc.CRC16(self.msg)
+
             if fcs.check_crc():
                 self.msg = self.msg[:-2]
                 return True
+
         elif (byte[0] == ESC):
             self.current_state = ESCAPE
+
         else:
             self.msg.append(byte[0])
             self.current_state = READ
@@ -119,26 +126,28 @@ class Framing(Sublayer):
         e envia pela porta serial'''
 
         fcs = crc.CRC16(msg)
-        msg = fcs.gen_crc()
+        msg = fcs.gen_crc()  # Anexa na mensagem o valor de FCS
 
         # GERAR ERROR PROPOSITAIS NA TRANSMISSÃO
         # msg = msg[:-1] # remove o ultimo byte
         # msg.reverse() # inverte os bytes
         # msg[0] = 99  # alterando o primeiro byte
 
-        if (len(msg) <= MAX_BYTES):  # Verifica se msg tem o tamanho adequado
+        if (len(msg) <= MAX_BYTES):
             frame = bytearray()
-            frame.append(FLAG)  # FLAG de inicio
+            frame.append(FLAG)
 
             for byte in msg:
-                if (byte == FLAG or byte == ESC):  # 7E -> 5E (^) / 7D -> ?(])
+                if (byte == FLAG or byte == ESC):
                     xor = byte ^ 0x20
                     frame.append(ESC)
                     frame.append(xor)
+
                 else:
                     frame.append(byte)
 
-            frame.append(FLAG)  # FLAG de fim
+            frame.append(FLAG)
             self.fd.write(bytes(frame))
+
         else:
             print('OVERFLOW! A mensagem tem mais de ', MAX_BYTES, ' bytes.')
