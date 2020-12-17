@@ -6,6 +6,11 @@ from sublayer import Sublayer
 from serial import Serial
 import sys
 
+'''A subcamada Application é responsável por transmitir
+e receber mensagens do usuário. Na transmissão (def handle) 
+serão lidos octetos da entrada padrão e enviados para a subcamada 
+inferior. Na recepção (def receive) a mensagem será decodificada 
+e apresentada na saída padrão. '''
 
 class Application(Sublayer):
 
@@ -13,15 +18,14 @@ class Application(Sublayer):
         Sublayer.__init__(self, porta_serial, tout)
 
     def handle(self):
-        '''Recebe os octetos do teclado, trata os dados
-        e envia para a camada inferior'''
+        '''Recebe os octetos do teclado e envia 
+        para a camada inferior'''
 
-        msg = sys.stdin.buffer.readline()  # Lê em bytes
-        # msg = msg[:-1]  # Tirando o '/n' do final da mensagem lida
+        msg = sys.stdin.buffer.readline()
         self.lowerLayer.send(msg)
 
     def receive(self, msg):
-        '''Recebe os octetos da camada inferior, trata os dados
-        e envia para o terminal '''
+        '''Recebe os octetos da camada inferior
+        e apresenta no terminal '''
         # msg = msg[:-1]
         print('mensagem: ', msg.decode('utf-8'))
