@@ -22,22 +22,18 @@ class Application(Sublayer):
         self.f = file
 
     def handle(self):
-        '''Recebe os octetos do teclado e envia 
+        '''Lê os octetos do arquivo e envia 
         para a camada inferior'''
 
-        i = 0
-        msg = ''
-        while (i < MAX_BYTES):
-            msg += self.f.readline(1)  # Lê 1 caractere
-            # print(len(msg))
-            i += 1
+        msg = self.f.read(MAX_BYTES)
 
-        if(msg == ''):  # Se chegou ao final do arquivo
+        if(len(msg) < MAX_BYTES):
             self.f.close()
             self.disable()
-        else:
-            print('Transmitiu ', len(msg), ' bytes')
-            self.lowerLayer.send(msg)
+            if len(msg) == 0: return
+        
+        print('Transmitiu ', len(msg), ' bytes')
+        self.lowerLayer.send(msg)
 
     def receive(self, msg):
         '''Recebe os octetos da camada inferior

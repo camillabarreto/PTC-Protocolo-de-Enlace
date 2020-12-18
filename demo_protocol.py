@@ -30,7 +30,7 @@ if __name__ == '__main__':
         sys.exit(0)
 
     # File
-    arq = open(args.file, 'r')
+    arq = open(args.file, 'rb')
     
     # Callbacks
     ap = Application(arq, 1)
