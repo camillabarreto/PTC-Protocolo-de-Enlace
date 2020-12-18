@@ -125,15 +125,15 @@ class Framing(Sublayer):
         '''Recebe os octetos da camada superior, trata os dados
         e envia pela porta serial'''
 
-        fcs = crc.CRC16(msg)
-        msg = fcs.gen_crc()  # Anexa na mensagem o valor de FCS
-
-        # GERAR ERROR PROPOSITAIS NA TRANSMISSÃO
-        # msg = msg[:-1] # remove o ultimo byte
-        # msg.reverse() # inverte os bytes
-        # msg[0] = 99  # alterando o primeiro byte
-
         if (len(msg) <= MAX_BYTES):
+            fcs = crc.CRC16(msg)
+            msg = fcs.gen_crc()  # Anexa na mensagem o valor de FCS
+
+            # GERAR ERROR PROPOSITAIS NA TRANSMISSÃO
+            # msg = msg[:-1] # remove o ultimo byte
+            # msg.reverse() # inverte os bytes
+            # msg[0] = 99  # alterando o primeiro byte
+            
             frame = bytearray()
             frame.append(FLAG)
 

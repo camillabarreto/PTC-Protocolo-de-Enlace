@@ -29,8 +29,11 @@ if __name__ == '__main__':
         print('Não conseguiu acessar a porta serial', e)
         sys.exit(0)
 
+    # File
+    arq = open(args.file, 'r')
+    
     # Callbacks
-    ap = Application(sys.stdin, 1)
+    ap = Application(arq, 1)
     fr = Framing(serial, 1)
     ap.connect(fr, None)
     fr.connect(None, ap)

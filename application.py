@@ -12,17 +12,32 @@ serão lidos octetos da entrada padrão e enviados para a subcamada
 inferior. Na recepção (def receive) a mensagem será decodificada 
 e apresentada na saída padrão. '''
 
+# Frame size limit
+MAX_BYTES = 128
+
 class Application(Sublayer):
 
-    def __init__(self, porta_serial: Serial, tout: float):
-        Sublayer.__init__(self, porta_serial, tout)
+    def __init__(self, file, tout: float):
+        Sublayer.__init__(self, file, tout)
+        self.f = file
 
     def handle(self):
         '''Recebe os octetos do teclado e envia 
         para a camada inferior'''
 
-        msg = sys.stdin.buffer.readline()
-        self.lowerLayer.send(msg)
+        i = 0
+        msg = ''
+        while (i < MAX_BYTES):
+            msg += self.f.readline(1)  # Lê 1 caractere
+            # print(len(msg))
+            i += 1
+
+        if(msg == ''):  # Se chegou ao final do arquivo
+            self.f.close()
+            self.disable()
+        else:
+            print('Transmitiu ', len(msg), ' bytes')
+            self.lowerLayer.send(msg)
 
     def receive(self, msg):
         '''Recebe os octetos da camada inferior
