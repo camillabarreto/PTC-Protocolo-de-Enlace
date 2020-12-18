@@ -32,7 +32,7 @@ class Application(Sublayer):
             self.disable()
             if len(msg) == 0: return
         
-        print('Transmitiu ', len(msg), ' bytes')
+        # print('Transmitiu ', len(msg), ' bytes')
         self.lowerLayer.send(msg)
 
     def receive(self, msg):
