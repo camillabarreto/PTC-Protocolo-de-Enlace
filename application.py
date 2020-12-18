@@ -6,33 +6,33 @@ from sublayer import Sublayer
 from serial import Serial
 import sys
 
+# Frame size limit
+MAX_BYTES = 128
 
 class Application(Sublayer):
 
     def __init__(self, file, tout: float):
         Sublayer.__init__(self, file, tout)
         self.f = file
-        self.msg = bytearray()
-        self.i = 0
 
     def handle(self):
         '''Recebe os octetos do teclado, trata os dados
         e envia para a camada inferior'''
         
-        '''
-        linha = self.f.readline()
+        i = 0
+        msg = ''
+        while (i < MAX_BYTES):
+            msg += self.f.readline(1) # Lê 1 caractere
+            # print(len(msg))
+            i += 1
+            
+        if(msg == ''): # Se chegou ao final do arquivo
+            self.f.close()
+            self.disable()
+        else:
+            print('Transmitiu ', len(msg), ' bytes')
+            self.lowerLayer.send(msg)
         
-        while linha:
-            print(linha)
-            linha = self.f.readline()
-        self.f.close()
-        '''
-        
-        conteudo_arq = self.f.read()
-        self.f.close()
-        self.disable()
-        # print(conteudo_arq)
-        self.lowerLayer.send(conteudo_arq)
 
     def receive(self, msg):
         '''Recebe os octetos da camada inferior, trata os dados
