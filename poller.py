@@ -53,7 +53,7 @@ class Callback:
   def disable_timeout(self):
       'Desativa o timeout'
       self._enabled_to = False
-
+      
   def enable_timeout(self):
       'Reativa o timeout'
       self._enabled_to = True
@@ -78,7 +78,7 @@ class Callback:
   @property
   def timeout_enabled(self):
       return self._enabled_to
-  
+
   @property
   def isTimer(self):
       'true se este callback for um timer'
@@ -88,14 +88,14 @@ class Callback:
   def isEnabled(self):
       'true se monitoramento do descritor estiver ativado neste callback'
       return self._enabled
-  
+
 class Poller:
   '''Classe Poller: um agendador de eventos que monitora objetos
   do tipo arquivo e executa callbacks quando tiverem dados para 
   serem lidos. Callbacks devem ser registrados para que 
   seus fileobj sejam monitorados. Callbacks que não possuem
   fileobj são tratados como timers'''
-  
+
   def __init__(self):
     self.cbs_to = []
     self.cbs = set()
@@ -129,10 +129,10 @@ class Poller:
       pass
 
   def _get_events(self, timeout):
-    sched = selectors.DefaultSelector()
+    sched = selectors.SelectSelector()
     active = False
     for cb in self.cbs:
-      if cb.isEnabled: 
+      if cb.isEnabled:
         sched.register(cb.fd, selectors.EVENT_READ, cb)
         active = True
     if not active and timeout == None:
@@ -171,4 +171,3 @@ class Poller:
     for cb in self.cbs:
       if not cb in fired: cb.update(dt)
     return True
-
