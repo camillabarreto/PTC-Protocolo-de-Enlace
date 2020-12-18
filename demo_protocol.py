@@ -33,7 +33,7 @@ if __name__ == '__main__':
     arq = open(args.file, 'rb')
     
     # Callbacks
-    ap = Application(arq, 1)
+    ap = Application(arq, 0)
     fr = Framing(serial, 1)
     ap.connect(fr, None)
     fr.connect(None, ap)
