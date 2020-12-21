@@ -29,8 +29,12 @@ if __name__ == '__main__':
         print('Não conseguiu acessar a porta serial', e)
         sys.exit(0)
 
-    # File
-    arq = open(args.file, 'rb')
+	# File
+    try:
+        arq = open(args.file, 'rb')
+    except Exception as e:
+        print('Não conseguiu acessar arquivo', e)
+        sys.exit(0)
     
     # Callbacks
     ap = Application(arq, 0)
