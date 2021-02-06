@@ -30,7 +30,7 @@ class Sublayer(poller.Callback):
         e envia para a camada superior'''
         pass
 
-    def connect(self, lower, upper):
+    def connect(self, upper, lower):
         '''Realiza as conexões com as camadas adjacentes'''
         self.lowerLayer = lower
         self.upperLayer = upper

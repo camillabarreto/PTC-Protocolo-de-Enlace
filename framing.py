@@ -40,7 +40,7 @@ class Framing(Sublayer):
     def handle(self):
         byte = self.fd.read()  # Lendo 1 octeto da porta serial
         result = self.FSM(byte)  # FSM retorna True para recepção bem sucedida
-        print(result)
+        # print(result)
         if (result):
             if (len(self.msg) <= MAX_BYTES):
                 self.upperLayer.receive(bytes(self.msg)) # Envia mensagem para subcamada superior
@@ -69,7 +69,7 @@ class Framing(Sublayer):
         return func(byte)
 
     def idle(self, byte):
-        print('IDLE')
+        # print('IDLE')
         if (byte[0] == FLAG):
             self.current_state = INIT
 
@@ -77,7 +77,7 @@ class Framing(Sublayer):
         return False
 
     def init(self, byte):
-        print('INIT')
+        # print('INIT')
         if (byte[0] == FLAG):
             self.current_state = INIT
 
@@ -92,13 +92,13 @@ class Framing(Sublayer):
         return False
 
     def read(self, byte):
-        print('READ')
+        # print('READ')
         if (byte[0] == FLAG):
             self.current_state = IDLE
             self.disable_timeout()
             fcs = crc.CRC16(self.msg)
-            print("mensagem: ",self.msg)
-            print("verificação: ",fcs.check_crc())
+            # print("mensagem: ",self.msg)
+            # print("verificação: ",fcs.check_crc())
             if fcs.check_crc():
                 self.msg = self.msg[:-2]
                 return True
@@ -115,7 +115,7 @@ class Framing(Sublayer):
         return False
 
     def escape(self, byte):
-        print('ESCAPE')
+        # print('ESCAPE')
         if (byte[0] == FLAG or byte[0] == ESC):
             self.msg.clear()
             self.disable_timeout()

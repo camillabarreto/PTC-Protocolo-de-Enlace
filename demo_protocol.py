@@ -8,6 +8,7 @@ from poller import Callback
 from serial import Serial
 from application import Application
 from framing import Framing
+from arq_saw import ARQ_saw
 
 
 if __name__ == '__main__':
@@ -39,8 +40,10 @@ if __name__ == '__main__':
     # Callbacks
     ap = Application(arq, 0)
     fr = Framing(serial, 1)
-    ap.connect(fr, None)
-    fr.connect(None, ap)
+    saw = ARQ_saw(None, 0)
+    ap.connect(None, saw)
+    saw.connect(ap, fr)
+    fr.connect(saw, None)
 
     # Poller
     sched = poller.Poller()
