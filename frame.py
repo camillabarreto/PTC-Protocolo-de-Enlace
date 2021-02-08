@@ -3,7 +3,7 @@
 MAX_BYTES = 128
 
 
-class Header:
+class Frame:
 
     def __init__(self):
         self.seq = 0  # ARQ usa na recepção
