@@ -25,6 +25,7 @@ class ARQ_saw(Sublayer):
         '''Recebe os octetos da camada inferior, trata os dados
         e envia para a camada superior '''
         rx = Frame()
-        rx.detach_frame(data)
+        rx.detach_frame(b'\x08\x00\x80ola ameliza\n')
+        print("ARQ", hex(rx.get_id_proto()))
         print("ARQ", rx.get_msg())
         self.upperLayer.receive(data)

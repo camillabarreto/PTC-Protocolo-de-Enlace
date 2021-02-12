@@ -10,7 +10,7 @@ class Frame:
         self.frame_type = 0  # ARQ usa na recepção
         self.id_proto = 0x00  # ARQ usa na recepção
         self.msg = b''  # ARQ usa na recepção
-        self.reservado = 0x00
+        self.reserved = 0x00
         self.header = bytearray()
 
     def get_data_frame(self, seq, id_proto, msg):
@@ -19,7 +19,7 @@ class Frame:
         else:
             control = 0x08
         self.header.append(control)
-        self.header.append(self.reservado)
+        self.header.append(self.reserved)
         self.header.append(id_proto)
         for byte in msg:
             self.header.append(byte)
@@ -31,7 +31,7 @@ class Frame:
         else:
             control = 0x88
         self.header.append(control)
-        self.header.append(self.reservado)
+        self.header.append(self.reserved)
         return self.header
 
     def detach_frame(self, byte_frame):
@@ -40,28 +40,31 @@ class Frame:
             self.seq = 0
             self.frame_type = 0
             self.id_proto = byte_frame[2]
-            self.header.append(byte)
-            self.msg = byte_frame[-3:]
+            self.msg = byte_frame[3:]
+            print("control 0x00")
         elif control == 0x08:
             self.seq = 1
             self.frame_type = 0
             self.id_proto = byte_frame[2]
-            self.msg = byte_frame[-3:]
+            self.msg = byte_frame[3:]
+            print("control 0x08")
         elif control == 0x80:
             self.seq = 0
             self.frame_type = 1
+            print("control 0x80")
         elif control == 0x88:
             self.seq = 1
             self.frame_type = 1
+            print("control 0x88")
             
     def get_seq(self):
         return self.seq
 
     def get_frame_type(self):
-        return frame_type
+        return self.frame_type
 
     def get_id_proto(self):
-        return id_proto
+        return self.id_proto
 
     def get_msg(self):
         return self.msg
