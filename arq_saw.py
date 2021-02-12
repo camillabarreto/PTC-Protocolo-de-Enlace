@@ -32,20 +32,20 @@ class ARQ_saw(Sublayer):
         
         # esta certo armazenar a ultima instancia de Frame transmitida, 
         # pq pode ser que precisa retransmitir
-        
+
         self.f.get_data_frame(self.tx, self.id_proto, data)
         print('ENVIO: ', self.f.header)
-        self.FSM(SEND)
+        self.FSM(SEND, self.f)
 
     def receive(self, frame):
         '''Recebe os octetos da camada inferior, trata os dados
         e envia para a camada superior '''
         
-        # mudar essa estrategia de usar a mesma insancia de Frame pq vai dar ruim
-        self.f.detach_frame(frame)
-        self.FSM(RECEIVE)
+        fs = Frame()
+        fs.detach_frame(frame)
+        self.FSM(RECEIVE, fs)
     
-    def FSM(self, id):
+    def FSM(self, id, f):
         switch = {
             IDLE: self.idle,
             WAIT: self.wait
@@ -53,28 +53,27 @@ class ARQ_saw(Sublayer):
 
         # Executa a função do estado atual
         func = switch.get(self.current_state, lambda: None)
-        return func(id)
+        return func(id, f)
 
-    def idle(self, id):
+    def idle(self, id, f):
         if id == SEND:
-            self.lowerLayer.send(self.f.header)
+            self.lowerLayer.send(f.header)
             self.current_state = WAIT
-        elif self.f.frame_type == DATA:
-            self.upperLayer.receive(self.f.header)
-            self.f.get_ack_frame(self.rx)
-            self.lowerLayer.send(self.f.header)
+        elif f.frame_type == DATA:
+            self.upperLayer.receive(f.msg)
+            f.get_ack_frame(self.rx)
+            self.lowerLayer.send(f.header)
             self.rx = abs(self.rx - 1)
-        # elif self.f.seq == self.tx:
 
-    # ainda precisa implementar ACK not rx
+        # ainda precisa implementar ACK not rx
         
 
-    def wait(self, id):
-        if self.f.frame_type == DATA:
-            self.upperLayer.receive(self.f.header)
-            self.f.get_ack_frame(self.rx)
+    def wait(self, id, f):
+        if f.frame_type == DATA:
+            self.upperLayer.receive(f.msg)
+            f.get_ack_frame(self.rx)
             self.rx = abs(self.rx - 1)
-        elif self.f.frame_type == ACK:
+        elif f.frame_type == ACK:
             self.tx = abs(self.tx - 1)
             self.current_state = IDLE
 
