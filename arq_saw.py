@@ -34,7 +34,6 @@ class ARQ_saw(Sublayer):
         # pq pode ser que precisa retransmitir
 
         self.f.get_data_frame(self.tx, self.id_proto, data)
-        print('ENVIO: ', self.f.header)
         self.FSM(SEND, self.f)
 
     def receive(self, frame):
@@ -56,12 +55,16 @@ class ARQ_saw(Sublayer):
         return func(id, f)
 
     def idle(self, id, f):
+        print('IDLE - ARQ')
         if id == SEND:
+            print('ENVIO DATA: ', f.header)
             self.lowerLayer.send(f.header)
             self.current_state = WAIT
         elif f.frame_type == DATA:
+            print('RECEBE DATA: ', f.header)
             self.upperLayer.receive(f.msg)
             f.get_ack_frame(self.rx)
+            print('ENVIO ACK', f.header)
             self.lowerLayer.send(f.header)
             self.rx = abs(self.rx - 1)
 
@@ -69,11 +72,16 @@ class ARQ_saw(Sublayer):
         
 
     def wait(self, id, f):
+        print('WAIT - ARQ')
         if f.frame_type == DATA:
+            print('RECEBE DATA', f.header)
             self.upperLayer.receive(f.msg)
             f.get_ack_frame(self.rx)
+            print('ENVIO ACK', f.header)
+            self.lowerLayer.send(f.header)
             self.rx = abs(self.rx - 1)
         elif f.frame_type == ACK:
+            print('RECEBE ACK', f.header)
             self.tx = abs(self.tx - 1)
             self.current_state = IDLE
 
