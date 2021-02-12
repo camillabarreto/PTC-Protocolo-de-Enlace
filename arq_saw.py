@@ -1,7 +1,7 @@
 import poller
 from poller import Callback
 from sublayer import Sublayer
-from header import Header
+from frame import Frame
 
 
 class ARQ_saw(Sublayer):
@@ -15,16 +15,16 @@ class ARQ_saw(Sublayer):
         '''Recebe os octetos da camada superior, trata os dados
         e envia para a camada inferior '''
         self.count += 1
-        tx = Header()
-        header = tx.get_data_frame(self.count, self.id_proto, data)
-        print(header)
+        tx = Frame()
+        frame = tx.get_data_frame(self.count, self.id_proto, data)
+        print(frame)
+        # print("ARQ", tx.get_ack_frame(self.count))
         self.lowerLayer.send(data)
-        
 
     def receive(self, data):
         '''Recebe os octetos da camada inferior, trata os dados
         e envia para a camada superior '''
-        rx = Header()
+        rx = Frame()
         rx.detach_frame(data)
-        print(self.msg)
+        print("ARQ", rx.get_msg())
         self.upperLayer.receive(data)
