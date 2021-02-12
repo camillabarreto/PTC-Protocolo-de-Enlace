@@ -20,6 +20,7 @@ class Application(Sublayer):
     def __init__(self, file, tout: float):
         Sublayer.__init__(self, file, tout)
         self.f = file
+        self.disable_timeout()
 
     def handle(self):
         '''Lê os octetos do arquivo e envia 
@@ -39,4 +40,5 @@ class Application(Sublayer):
         '''Recebe os octetos da camada inferior
         e apresenta no terminal '''
         # msg = msg[:-1]
-        print('mensagem: ', msg.decode('utf-8'))
+        # print('mensagem: ', msg.decode('utf-8'))
+        print('mensagem: ', msg)

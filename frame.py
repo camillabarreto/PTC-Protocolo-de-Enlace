@@ -23,7 +23,6 @@ class Frame:
         self.header.append(id_proto)
         for byte in msg:
             self.header.append(byte)
-        return self.header
 
     def get_ack_frame(self, seq):
         if seq == 0:
