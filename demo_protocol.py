@@ -7,12 +7,13 @@ import argparse
 from poller import Callback
 from serial import Serial
 from application import Application
+from application_keyboard import ApplicationKeyboard
 from framing import Framing
 from arq_saw import ARQ_saw
 
 
 if __name__ == '__main__':
-    
+
     # Visualização de ajuda
     parser = argparse.ArgumentParser(description='Programa de Demonstração')
     parser.add_argument('-s', '--serialPath', help='Porta serial onde ocorrerá a comunicação', type=str,
@@ -30,15 +31,19 @@ if __name__ == '__main__':
         print('Não conseguiu acessar a porta serial', e)
         sys.exit(0)
 
-	# File
-    try:
-        arq = open(args.file, 'rb')
-    except Exception as e:
-        print('Não conseguiu acessar arquivo', e)
-        sys.exit(0)
+	# # File
+    # try:
+    #     arq = open(args.file, 'rb')
+    # except Exception as e:
+    #     print('Não conseguiu acessar arquivo', e)
+    #     sys.exit(0)
+
+    arq = sys.stdin  # para testes
     
     # Callbacks
-    ap = Application(arq, 0)
+
+    ap = ApplicationKeyboard(arq, 0) # para testes
+    # ap = Application(arq, 0)
     fr = Framing(serial, 1)
     saw = ARQ_saw(None, 0)
     ap.connect(None, saw)
