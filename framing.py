@@ -72,8 +72,8 @@ class Framing(Sublayer):
         # print('IDLE')
         if (byte[0] == FLAG):
             self.current_state = INIT
-
-        self.enable_timeout()
+            self.enable_timeout()
+            
         return False
 
     def init(self, byte):

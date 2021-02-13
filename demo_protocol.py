@@ -45,7 +45,7 @@ if __name__ == '__main__':
     ap = ApplicationKeyboard(arq, 0) # para testes
     # ap = Application(arq, 0)
     fr = Framing(serial, 1)
-    saw = ARQ_saw(None, 0)
+    saw = ARQ_saw(None, 2)
     ap.connect(None, saw)
     saw.connect(ap, fr)
     fr.connect(saw, None)
