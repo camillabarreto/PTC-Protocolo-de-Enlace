@@ -34,4 +34,4 @@ class ApplicationKeyboard(Sublayer):
         '''Recebe os octetos da camada inferior
         e apresenta no terminal '''
     
-        print('mensagem: ', msg)
+        print('mensagem: ', msg.decode('utf-8')[:-1])
