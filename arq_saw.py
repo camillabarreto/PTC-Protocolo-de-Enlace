@@ -21,24 +21,19 @@ class ARQ_saw(Sublayer):
         Sublayer.__init__(self, porta_serial, tout)
         self.disable_timeout()
         self.current_state = IDLE
-        self.rx = 0
+        self.rx = 0 # se trocar pra 1 da pra testar ACK NOT RX
         self.tx = 0
         self.id_proto = 0x11
         self.f = Frame()
     
     def send(self, data):
-        '''Recebe os octetos da camada superior, trata os dados
-        e envia para a camada inferior '''
-        
-        # esta certo armazenar a ultima instancia de Frame transmitida, 
-        # pq pode ser que precisa retransmitir
+        '''Adicionar descrição '''
 
         self.f.get_data_frame(self.tx, self.id_proto, data)
         self.FSM(SEND, self.f)
 
     def receive(self, frame):
-        '''Recebe os octetos da camada inferior, trata os dados
-        e envia para a camada superior '''
+        '''Adicionar descrição '''
         
         fs = Frame()
         fs.detach_frame(frame)
@@ -55,34 +50,42 @@ class ARQ_saw(Sublayer):
         return func(id, f)
 
     def idle(self, id, f):
-        print('IDLE - ARQ')
-        if id == SEND:
-            print('ENVIO DATA: ', f.header)
+        # print('IDLE - ARQ')
+
+        if id == SEND and f.frame_type == DATA:
+            # print('ENVIO DATA: ', f.header)
             self.lowerLayer.send(f.header)
             self.current_state = WAIT
-        elif f.frame_type == DATA:
-            print('RECEBE DATA: ', f.header)
-            self.upperLayer.receive(f.msg)
-            f.get_ack_frame(self.rx)
-            print('ENVIO ACK', f.header)
-            self.lowerLayer.send(f.header)
-            self.rx = abs(self.rx - 1)
 
-        # ainda precisa implementar ACK not rx
-        
+        elif id == RECEIVE and f.frame_type == DATA:
+            # print('RECEBE DATA', f.header)
+            if f.seq == self.rx:
+                self.upperLayer.receive(f.msg)
+                f.get_ack_frame(self.rx)
+                self.rx = abs(self.rx - 1)
+            else:
+                f.get_ack_frame(f.seq)
+            # print('ENVIO ACK', f.header)
+            self.lowerLayer.send(f.header)
+
 
     def wait(self, id, f):
-        print('WAIT - ARQ')
-        if f.frame_type == DATA:
-            print('RECEBE DATA', f.header)
-            self.upperLayer.receive(f.msg)
-            f.get_ack_frame(self.rx)
-            print('ENVIO ACK', f.header)
+        # print('WAIT - ARQ')
+
+        if id == RECEIVE and f.frame_type == DATA:
+            # print('RECEBE DATA', f.header)
+            if f.seq == self.rx:
+                self.upperLayer.receive(f.msg)
+                f.get_ack_frame(self.rx)
+                self.rx = abs(self.rx - 1)
+            else:
+                f.get_ack_frame(f.seq)
+            # print('ENVIO ACK', f.header)
             self.lowerLayer.send(f.header)
-            self.rx = abs(self.rx - 1)
-        elif f.frame_type == ACK:
-            print('RECEBE ACK', f.header)
+
+        elif id == RECEIVE and f.frame_type == ACK:
+            # print('RECEBE ACK', f.header)
             self.tx = abs(self.tx - 1)
             self.current_state = IDLE
 
-        # ainda precisa implementar TIMEOUT e ACK not tx
+        # ainda precisa implementar TIMEOUT
