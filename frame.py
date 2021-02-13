@@ -2,7 +2,6 @@
 
 MAX_BYTES = 128
 
-
 class Frame:
 
     def __init__(self):
@@ -41,30 +40,55 @@ class Frame:
             self.frame_type = 0
             self.id_proto = byte_frame[2]
             self.msg = byte_frame[3:]
-            print("control 0x00")
         elif control == 0x08:
             self.seq = 1
             self.frame_type = 0
             self.id_proto = byte_frame[2]
             self.msg = byte_frame[3:]
-            print("control 0x08")
         elif control == 0x80:
             self.seq = 0
             self.frame_type = 1
-            print("control 0x80")
         elif control == 0x88:
             self.seq = 1
             self.frame_type = 1
-            print("control 0x88")
             
-    def get_seq(self):
+    @property
+    def seq(self):
         return self.seq
 
-    def get_frame_type(self):
+    @property
+    def frame_type(self):
         return self.frame_type
 
-    def get_id_proto(self):
+    @property
+    def id_proto(self):
         return self.id_proto
 
-    def get_msg(self):
+    @property
+    def msg(self):
         return self.msg
+    
+    @seq.setter   
+    def seq(self, seq):
+        if not seq:
+            self.header[0] &= 0xf7
+        else:
+            self.header[0] |= 0x08
+    
+    @frame_type.setter
+    def frame_type(self, vl):
+        if not vl:
+            self.header[0] &= 0x7f
+        else: 
+            self.header[0] |= 0x80
+            
+    @id_proto.setter
+    def id_proto(self, id):
+        if id == 4: # IPV4
+            self.header[2] = 0x800
+        elif id == 6: # IPV6
+            self.header[2] = 0x866d
+        
+    @msg.setter
+    def msg(self, m):
+        self.header[2]
