@@ -5,10 +5,10 @@ MAX_BYTES = 128
 class Frame:
 
     def __init__(self):
-        self.seq = 0  # ARQ usa na recepção
-        self.type = 0  # ARQ usa na recepção
-        self.id_proto = 0x00  # ARQ usa na recepção
-        self.msg = b''  # ARQ usa na recepção
+        self.seq = 0
+        self.type = 0
+        self.id_proto = 0x00
+        self.msg = b''
         self.reservado = 0x00
         self.header = bytearray()
 
@@ -25,7 +25,7 @@ class Frame:
             control = 0x08
         self.header.append(control)
         self.header.append(self.reservado)
-        self.header.append(id_proto)
+        self.header.append(self.id_proto)
         for byte in msg:
             self.header.append(byte)
 

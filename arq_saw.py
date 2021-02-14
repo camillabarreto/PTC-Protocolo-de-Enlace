@@ -23,7 +23,7 @@ class ARQ_saw(Sublayer):
         self.current_state = IDLE
         self.rx = 0
         self.tx = 0
-        self.id_proto = 0x11
+        self.id_proto = 4
         self.last_frame = Frame() # ultimo quadro enviado é armazenado aqui para casos de retransmissao
 
 

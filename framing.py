@@ -42,13 +42,9 @@ class Framing(Sublayer):
         byte = self.fd.read()  # Lendo 1 octeto da porta serial
         result = self.FSM(byte)  # FSM retorna True para recepção bem sucedida
         if (result):
-            if (len(self.buffer) <= MAX_BYTES):
-                frame_teste = Frame()
-                frame_teste.detach_frame(bytes(self.buffer))
-                self.upperLayer.receive(frame_teste)
-            else:
-                print('OVERFLOW! A mensagem tem mais de ', MAX_BYTES, ' bytes.')
-
+            frame_teste = Frame()
+            frame_teste.detach_frame(bytes(self.buffer))
+            self.upperLayer.receive(frame_teste)
             self.buffer.clear()
 
     def handle_timeout(self):
@@ -76,20 +72,27 @@ class Framing(Sublayer):
         return False
 
     def init(self, byte):
+        self.reload_timeout()
+
         if (byte[0] == FLAG):
             self.current_state = INIT
 
         elif (byte[0] == ESC):
             self.current_state = ESCAPE
 
-        else:
+        elif (len(self.buffer) <= MAX_BYTES):
             self.buffer.append(byte[0])
             self.current_state = READ
+        else:
+            print('1 OVERFLOW! A mensagem tem', MAX_BYTES, 'bytes.')
+            self.buffer.clear()
+            self.current_state = IDLE
+            self.disable_timeout()
 
-        self.reload_timeout()
         return False
 
     def read(self, byte):
+        self.reload_timeout()
         if (byte[0] == FLAG):
             self.current_state = IDLE
             self.disable_timeout()
@@ -102,25 +105,34 @@ class Framing(Sublayer):
         elif (byte[0] == ESC):
             self.current_state = ESCAPE
 
-        else:
+        elif (len(self.buffer) <= MAX_BYTES):
             self.buffer.append(byte[0])
             self.current_state = READ
+        else:
+            print('2 OVERFLOW! A mensagem tem', MAX_BYTES, 'bytes.')
+            self.buffer.clear()
+            self.current_state = IDLE
+            self.disable_timeout()
 
-        self.reload_timeout()
         return False
 
     def escape(self, byte):
+        self.reload_timeout()
         if (byte[0] == FLAG or byte[0] == ESC):
             self.buffer.clear()
             self.disable_timeout()
             self.current_state = IDLE
 
-        else:
+        elif (len(self.buffer) <= MAX_BYTES):
             byte = byte[0] ^ 0x20
             self.buffer.append(byte)
             self.current_state = READ
+        else:
+            print('3 OVERFLOW! A mensagem tem', MAX_BYTES, 'bytes.')
+            self.buffer.clear()
+            self.current_state = IDLE
+            self.disable_timeout()
 
-        self.reload_timeout()
         return False
 
     def send(self, fr):
