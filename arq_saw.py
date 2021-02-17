@@ -36,8 +36,7 @@ class ARQ_saw(Sublayer):
         print("TIMEOUT!")
         self.lowerLayer.send(self.last_frame)
         self.reload_timeout()
-        # acho que nao ta funcionando pq essa subcamada tem fileobj = None
-        # pra testar tem que comentar os envios de frames DATA para a camada inferior
+        # fazer esse tratamento na máquina de estados
 
 
     def send(self, data):
@@ -62,6 +61,7 @@ class ARQ_saw(Sublayer):
             # print('ENVIO DATA: ', frame.header)
             self.lowerLayer.send(frame)
             self.current_state = WAIT
+            self.reload_timeout()
             self.enable_timeout()
 
         elif id == RECEIVE and frame.type == DATA:

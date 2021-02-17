@@ -53,5 +53,6 @@ if __name__ == '__main__':
     # Poller
     sched = poller.Poller()
     sched.adiciona(ap)
+    sched.adiciona(saw)
     sched.adiciona(fr)
     sched.despache()
