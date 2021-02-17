@@ -25,6 +25,10 @@ class ARQ_saw(Sublayer):
         self.tx = 0
         self.id_proto = 4
         self.last_frame = Frame() # ultimo quadro enviado é armazenado aqui para casos de retransmissao
+        self.switch = {
+            IDLE: self.idle,
+            WAIT: self.wait
+        }
 
 
     def handle_timeout(self):
@@ -47,11 +51,8 @@ class ARQ_saw(Sublayer):
         self.FSM(RECEIVE, frame)
     
     def FSM(self, id, frame):
-        switch = {
-            IDLE: self.idle,
-            WAIT: self.wait
-        }
-        func = switch.get(self.current_state, lambda: None)
+        func = self.switch.get(self.current_state, lambda: None)
+        # func = self.switch[self.current_state]
         return func(id, frame)
 
 
