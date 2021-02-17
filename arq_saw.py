@@ -10,7 +10,7 @@ WAIT = 1
 # ID
 SEND = 0
 RECEIVE = 1
-TIMER = 2
+TIMEOUT = 2
 
 # FRAME TYPES
 DATA = 0
@@ -37,9 +37,7 @@ class ARQ_saw(Sublayer):
         '''Comunica a FSM que houve timeout, e ela trata o mesmo da forma 
         pertinente ao estado em que se encontra'''
         print("TIMEOUT!")
-        self.lowerLayer.send(self.last_frame)
-        self.reload_timeout()
-        # fazer esse tratamento na máquina de estados
+        self.FSM(TIMEOUT, None)
 
 
     def send(self, data):
@@ -77,11 +75,14 @@ class ARQ_saw(Sublayer):
             else:
                 frame.get_ack_frame(frame.seq)
             # print('ENVIO ACK', frame.header)
-            self.lowerLayer.send(frame)
+            # self.lowerLayer.send(frame)
 
     def wait(self, id, frame):
         # print('WAIT - ARQ')
-        if id == RECEIVE and frame.type == DATA:
+        if id == TIMEOUT:
+            self.lowerLayer.send(self.last_frame)
+            self.reload_timeout()
+        elif id == RECEIVE and frame.type == DATA:
             # print('RECEBE DATA', frame.header)
             if frame.seq == self.rx:
                 self.upperLayer.receive(frame.msg)
@@ -90,7 +91,7 @@ class ARQ_saw(Sublayer):
             else:
                 frame.get_ack_frame(frame.seq)
             # print('ENVIO ACK', frame.header)
-            self.lowerLayer.send(frame)
+            # self.lowerLayer.send(frame)
 
         elif id == RECEIVE and frame.type == ACK:
             # print('RECEBE ACK', frame.header)
