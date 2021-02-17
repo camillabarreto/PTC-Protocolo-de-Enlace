@@ -75,7 +75,7 @@ class ARQ_saw(Sublayer):
             else:
                 frame.get_ack_frame(frame.seq)
             # print('ENVIO ACK', frame.header)
-            # self.lowerLayer.send(frame)
+            self.lowerLayer.send(frame)
 
     def wait(self, id, frame):
         # print('WAIT - ARQ')
@@ -91,7 +91,7 @@ class ARQ_saw(Sublayer):
             else:
                 frame.get_ack_frame(frame.seq)
             # print('ENVIO ACK', frame.header)
-            # self.lowerLayer.send(frame)
+            self.lowerLayer.send(frame)
 
         elif id == RECEIVE and frame.type == ACK:
             # print('RECEBE ACK', frame.header)
