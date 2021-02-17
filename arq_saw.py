@@ -10,10 +10,12 @@ WAIT = 1
 # ID
 SEND = 0
 RECEIVE = 1
+TIMER = 2
 
 # FRAME TYPES
 DATA = 0
 ACK = 1
+
 
 class ARQ_saw(Sublayer):
 
@@ -32,7 +34,8 @@ class ARQ_saw(Sublayer):
 
 
     def handle_timeout(self):
-        '''Adicionar descrição '''
+        '''Comunica a FSM que houve timeout, e ela trata o mesmo da forma 
+        pertinente ao estado em que se encontra'''
         print("TIMEOUT!")
         self.lowerLayer.send(self.last_frame)
         self.reload_timeout()
@@ -40,13 +43,15 @@ class ARQ_saw(Sublayer):
 
 
     def send(self, data):
-        '''Adicionar descrição '''
+        '''Recebe os octetos da camada superior, cria um quadro de dados
+        com os campos necessários e envia para a camada inferior'''
         self.last_frame.get_data_frame(self.tx, self.id_proto, data)
         self.FSM(SEND, self.last_frame)
 
 
     def receive(self, frame):
-        '''Adicionar descrição '''
+        '''Comunica a FSM que recebeu um quadro, e ela trata o mesmo da forma 
+        pertinente ao estado em que se encontra'''
         self.FSM(RECEIVE, frame)
     
     def FSM(self, id, frame):
