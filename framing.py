@@ -37,6 +37,12 @@ class Framing(Sublayer):
         self.buffer = bytearray()
         self.disable_timeout()
         self.current_state = IDLE
+        self.switch = {
+            IDLE: self.idle,
+            INIT: self.init,
+            READ: self.read,
+            ESCAPE: self.escape
+        }
 
     def handle(self):
         byte = self.fd.read()  # Lendo 1 octeto da porta serial
@@ -55,13 +61,7 @@ class Framing(Sublayer):
         print('TIMEOUT!')
 
     def FSM(self, byte):
-        switch = {
-            IDLE: self.idle,
-            INIT: self.init,
-            READ: self.read,
-            ESCAPE: self.escape
-        }
-        func = switch.get(self.current_state, lambda: None)
+        func = self.switch[self.current_state]
         return func(byte)
 
     def idle(self, byte):

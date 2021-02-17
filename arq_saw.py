@@ -55,8 +55,7 @@ class ARQ_saw(Sublayer):
         self.FSM(RECEIVE, frame)
     
     def FSM(self, id, frame):
-        func = self.switch.get(self.current_state, lambda: None)
-        # func = self.switch[self.current_state]
+        func = self.switch[self.current_state]
         return func(id, frame)
 
 
