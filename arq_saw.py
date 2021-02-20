@@ -8,6 +8,7 @@ from random import randint
 IDLE = 0
 WAIT = 1
 BACKOFF = 2
+ON_HOLD = 3
 
 # ID
 SEND = 0
@@ -25,6 +26,7 @@ class ARQ_saw(Sublayer):
         Sublayer.__init__(self, porta_serial, tout)
         self.disable_timeout()
         self.current_state = IDLE
+        self.tout_ack = tout
         self.rx = 0
         self.tx = 0
         self.id_proto = 4
@@ -34,7 +36,8 @@ class ARQ_saw(Sublayer):
         self.switch = {
             IDLE: self.idle,
             WAIT: self.wait,
-            BACKOFF: self.backoff
+            BACKOFF: self.backoff,
+            ON_HOLD: self.on_hold
         }
 
 
@@ -101,12 +104,13 @@ class ARQ_saw(Sublayer):
             # print('RECEBE ACK', frame.header)
             if frame.seq == self.tx:
                 self.tx = int(not self.tx)
-                self.current_state = IDLE
+                self.current_state = ON_HOLD
                 self.disable_timeout()
             else:
-                new_time = randint(1,10) # entre 1s e 10s
-                timeout = new_time
                 self.current_state = BACKOFF
+                
+            new_time = randint(1,10) # entre 1s e 10s
+            self.timeout = new_time
                 
                 
     def backoff(self, id, frame):
@@ -118,8 +122,26 @@ class ARQ_saw(Sublayer):
             else:
                 self.lowerLayer.send(self.last_frame)
                 self.retries += 1
+                self.timeout = self.tout_ack
                 self.reload_timeout()
                 self.current_state = WAIT
+            
+        elif id == RECEIVE and frame.type == DATA:
+            # print('RECEBE DATA', frame.header)
+            if frame.seq == self.rx:
+                self.upperLayer.receive(frame.msg)
+                frame.get_ack_frame(self.rx)
+                self.rx = int(not self.rx)
+            else:
+                frame.get_ack_frame(frame.seq)
+            # print('ENVIO ACK', frame.header)
+            self.lowerLayer.send(frame)
+            
+    def on_hold(self):
+        # print('ON_HOLD - ARQ')
+        if id == TIMEOUT:
+            self.timeout = self.tout_ack
+            self.current_state = IDLE
             
         elif id == RECEIVE and frame.type == DATA:
             # print('RECEBE DATA', frame.header)
