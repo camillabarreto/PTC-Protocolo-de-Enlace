@@ -108,7 +108,6 @@ class ARQ_saw(Sublayer):
             if frame.seq == self.tx:
                 self.tx = int(not self.tx)
                 self.current_state = ON_HOLD
-                self.disable_timeout()
             else:
                 self.current_state = BACKOFF
                 
@@ -145,6 +144,7 @@ class ARQ_saw(Sublayer):
         if id == TIMEOUT:
             self.timeout = self.tout_ack
             self.current_state = IDLE
+            self.disable_timeout()
             
         elif id == RECEIVE and frame.type == DATA:
             # print('RECEBE DATA', frame.header)
