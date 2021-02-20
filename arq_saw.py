@@ -112,7 +112,7 @@ class ARQ_saw(Sublayer):
     def backoff(self, id, frame):
         # print('BACKOFF - ARQ')
         if id == TIMEOUT:
-            if (self.retries == self.limit_retries-1):
+            if (self.retries == self.limit_retries):
                 print("Atingiu o limite de retransmissões")
                 self.retries = 0
             else:
