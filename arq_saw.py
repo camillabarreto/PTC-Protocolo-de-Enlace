@@ -89,6 +89,9 @@ class ARQ_saw(Sublayer):
         # print('WAIT - ARQ')
         if id == TIMEOUT:
             self.current_state = BACKOFF
+            new_time = randint(1,10) # entre 1s e 10s
+            self.timeout = new_time
+            
         elif id == RECEIVE and frame.type == DATA:
             # print('RECEBE DATA', frame.header)
             if frame.seq == self.rx:
