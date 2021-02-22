@@ -2,10 +2,13 @@ import poller
 from poller import Callback
 from sublayer import Sublayer
 from frame import Frame
+from random import randint
 
 # States
 IDLE = 0
 WAIT = 1
+BACKOFF = 2
+ON_HOLD = 3
 
 # ID
 SEND = 0
@@ -23,13 +26,18 @@ class ARQ_saw(Sublayer):
         Sublayer.__init__(self, porta_serial, tout)
         self.disable_timeout()
         self.current_state = IDLE
+        self.tout_ack = tout
         self.rx = 0
         self.tx = 0
         self.id_proto = 4
+        self.retries = 0
+        self.limit_retries = 3
         self.last_frame = Frame() # ultimo quadro enviado é armazenado aqui para casos de retransmissao
         self.switch = {
             IDLE: self.idle,
-            WAIT: self.wait
+            WAIT: self.wait,
+            BACKOFF: self.backoff,
+            ON_HOLD: self.on_hold
         }
 
 
@@ -80,8 +88,53 @@ class ARQ_saw(Sublayer):
     def wait(self, id, frame):
         # print('WAIT - ARQ')
         if id == TIMEOUT:
-            self.lowerLayer.send(self.last_frame)
-            self.reload_timeout()
+            # print('TIMEOUT WAIT')
+            self.current_state = BACKOFF
+            new_time = randint(1,10) # entre 1s e 10s
+            self.timeout = new_time
+            # print(new_time)
+            
+        elif id == RECEIVE and frame.type == DATA:
+            print('RECEBE DATA WAIT', frame.header)
+            if frame.seq == self.rx:
+                self.upperLayer.receive(frame.msg)
+                frame.get_ack_frame(self.rx)
+                self.rx = int(not self.rx)
+            else:
+                frame.get_ack_frame(frame.seq)
+            # print('ENVIO ACK WAIT', frame.header)
+            self.lowerLayer.send(frame)
+
+        elif id == RECEIVE and frame.type == ACK:
+            # print('RECEBE ACK WAIT', frame.header)
+            if frame.seq == self.tx:
+                self.tx = int(not self.tx)
+                self.current_state = ON_HOLD
+            else:
+                self.current_state = BACKOFF
+                
+            new_time = randint(1,10) # entre 1s e 10s
+            self.timeout = new_time
+            # print(new_time)
+                
+                
+    def backoff(self, id, frame):
+        # print('BACKOFF - ARQ')
+        if id == TIMEOUT:
+            # print('TIME OK BACKOFF')
+            if (self.retries == self.limit_retries-1):
+                # print("Atingiu o limite de retransmissões")
+                self.retries = 0
+                self.current_state = ON_HOLD
+                new_time = randint(1,10) # entre 1s e 10s
+                self.timeout = new_time
+            else:
+                self.lowerLayer.send(self.last_frame)
+                self.retries += 1
+                self.timeout = self.tout_ack
+                self.reload_timeout()
+                self.current_state = WAIT
+            
         elif id == RECEIVE and frame.type == DATA:
             # print('RECEBE DATA', frame.header)
             if frame.seq == self.rx:
@@ -92,12 +145,22 @@ class ARQ_saw(Sublayer):
                 frame.get_ack_frame(frame.seq)
             # print('ENVIO ACK', frame.header)
             self.lowerLayer.send(frame)
-
-        elif id == RECEIVE and frame.type == ACK:
-            # print('RECEBE ACK', frame.header)
-            if frame.seq == self.tx:
-                self.tx = int(not self.tx)
-                self.current_state = IDLE
-                self.disable_timeout()
+            
+    def on_hold(self, id, frame):
+        # print('ON_HOLD - ARQ')
+        if id == TIMEOUT:
+            # print('TIME OK ON_HOLD')
+            self.timeout = self.tout_ack
+            self.current_state = IDLE
+            self.disable_timeout()
+            
+        elif id == RECEIVE and frame.type == DATA:
+            # print('RECEBE DATA ON_HOLD', frame.header)
+            if frame.seq == self.rx:
+                self.upperLayer.receive(frame.msg)
+                frame.get_ack_frame(self.rx)
+                self.rx = int(not self.rx)
             else:
-                self.lowerLayer.send(self.last_frame)
+                frame.get_ack_frame(frame.seq)
+            # print('ENVIO ACK ON_HOLD', frame.header)
+            self.lowerLayer.send(frame)
