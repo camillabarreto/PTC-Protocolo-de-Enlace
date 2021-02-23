@@ -26,12 +26,12 @@ class ARQ_saw(Sublayer):
         Sublayer.__init__(self, porta_serial, tout)
         self.disable_timeout()
         self.current_state = IDLE
-        self.tout_ack = tout
         self.rx = 0
         self.tx = 0
         self.id_proto = 4
-        self.retries = 0
-        self.limit_retries = 3
+        self.slot_time = 0.1
+        self.slot_min = 0
+        self.slot_max = 7
         self.last_frame = Frame() # ultimo quadro enviado é armazenado aqui para casos de retransmissao
         self.switch = {
             IDLE: self.idle,
@@ -44,7 +44,7 @@ class ARQ_saw(Sublayer):
     def handle_timeout(self):
         '''Comunica a FSM que houve timeout, e ela trata o mesmo da forma 
         pertinente ao estado em que se encontra'''
-        print("TIMEOUT!")
+        # print("TIMEOUT!")
         self.FSM(TIMEOUT, None)
 
 
@@ -90,12 +90,12 @@ class ARQ_saw(Sublayer):
         if id == TIMEOUT:
             # print('TIMEOUT WAIT')
             self.current_state = BACKOFF
-            new_time = randint(1,10) # entre 1s e 10s
+            new_time = self.slot_time*randint(self.slot_min,self.slot_max)
             self.timeout = new_time
             # print(new_time)
             
         elif id == RECEIVE and frame.type == DATA:
-            print('RECEBE DATA WAIT', frame.header)
+            # print('RECEBE DATA WAIT', frame.header)
             if frame.seq == self.rx:
                 self.upperLayer.receive(frame.msg)
                 frame.get_ack_frame(self.rx)
@@ -113,7 +113,7 @@ class ARQ_saw(Sublayer):
             else:
                 self.current_state = BACKOFF
                 
-            new_time = randint(1,10) # entre 1s e 10s
+            new_time = self.slot_time*randint(self.slot_min,self.slot_max)
             self.timeout = new_time
             # print(new_time)
                 
@@ -122,18 +122,9 @@ class ARQ_saw(Sublayer):
         # print('BACKOFF - ARQ')
         if id == TIMEOUT:
             # print('TIME OK BACKOFF')
-            if (self.retries == self.limit_retries-1):
-                # print("Atingiu o limite de retransmissões")
-                self.retries = 0
-                self.current_state = ON_HOLD
-                new_time = randint(1,10) # entre 1s e 10s
-                self.timeout = new_time
-            else:
-                self.lowerLayer.send(self.last_frame)
-                self.retries += 1
-                self.timeout = self.tout_ack
-                self.reload_timeout()
-                self.current_state = WAIT
+            self.lowerLayer.send(self.last_frame)
+            self.reload_timeout()
+            self.current_state = WAIT
             
         elif id == RECEIVE and frame.type == DATA:
             # print('RECEBE DATA', frame.header)
@@ -150,7 +141,6 @@ class ARQ_saw(Sublayer):
         # print('ON_HOLD - ARQ')
         if id == TIMEOUT:
             # print('TIME OK ON_HOLD')
-            self.timeout = self.tout_ack
             self.current_state = IDLE
             self.disable_timeout()
             
