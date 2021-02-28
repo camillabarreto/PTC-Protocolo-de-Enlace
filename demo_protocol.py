@@ -16,11 +16,11 @@ if __name__ == '__main__':
 
     # Visualização de ajuda
     parser = argparse.ArgumentParser(description='Programa de Demonstração')
-    parser.add_argument('-s', '--serialPath', help='Porta serial onde ocorrerá a comunicação', type=str,
+    parser.add_argument('-s', help='Porta serial utilizada na comunicação', type=str,
                         dest='path', required=False, default="")
-    parser.add_argument('-r', '--rate', help='Taxa de transmissão da porta serial', type=str,
+    parser.add_argument('-r', help='Taxa de transmissão da porta serial', type=str,
                         dest='rate', required=False, default="")
-    parser.add_argument('-t', '--ipTun', help='IPs utilizados para comunicação da interface Tun', type=str, 
+    parser.add_argument('-t', help='IP origem e IP destino', type=str, 
                         dest='ip', nargs='+', required=False, default="")
     args = parser.parse_args()
     
@@ -32,7 +32,7 @@ if __name__ == '__main__':
         sys.exit(0)
 
     # Tun
-    tun = Tun("tun",""+args.ip[0],""+args.ip[1],mask="255.255.255.252",mtu=1500,qlen=4)
+    tun = Tun("tun",args.ip[0],args.ip[1],mask="255.255.255.252",mtu=1500,qlen=4)
     tun.start()
     
     # Callbacks
