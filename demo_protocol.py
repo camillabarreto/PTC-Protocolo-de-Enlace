@@ -10,6 +10,8 @@ from application import Application
 from application_keyboard import ApplicationKeyboard
 from framing import Framing
 from arq_saw import ARQ_saw
+from tun import Tun
+from tun_interface import Tun_Interface
 
 
 if __name__ == '__main__':
@@ -31,28 +33,21 @@ if __name__ == '__main__':
         print('Não conseguiu acessar a porta serial', e)
         sys.exit(0)
 
-	# # File
-    # try:
-    #     arq = open(args.file, 'rb')
-    # except Exception as e:
-    #     print('Não conseguiu acessar arquivo', e)
-    #     sys.exit(0)
-
-    arq = sys.stdin  # para testes
+    # Tun
+    tun = Tun("tun","10.0.0.1","10.0.0.2",mask="255.255.255.252",mtu=1500,qlen=4)
+    tun.start()
     
     # Callbacks
-
-    ap = ApplicationKeyboard(arq, 0) # para testes
-    # ap = Application(arq, 0)
+    tun_int = Tun_Interface(tun, 0)
     fr = Framing(serial, 1)
     saw = ARQ_saw(None, 1)
-    ap.connect(None, saw)
-    saw.connect(ap, fr)
+    tun_int.connect(None, saw)
+    saw.connect(tun_int, fr)
     fr.connect(saw, None)
 
     # Poller
     sched = poller.Poller()
-    sched.adiciona(ap)
+    sched.adiciona(tun_int)
     sched.adiciona(saw)
     sched.adiciona(fr)
     sched.despache()

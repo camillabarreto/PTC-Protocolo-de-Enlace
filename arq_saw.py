@@ -19,6 +19,9 @@ TIMEOUT = 2
 DATA = 0
 ACK = 1
 
+# PROTOCOLS
+IPV4 = 0x800
+IPV6 = 0x86dd
 
 class ARQ_saw(Sublayer):
 
@@ -28,7 +31,6 @@ class ARQ_saw(Sublayer):
         self.current_state = IDLE
         self.rx = 0
         self.tx = 0
-        self.id_proto = 4
         self.slot_time = 0.1
         self.slot_min = 0
         self.slot_max = 7
@@ -48,10 +50,14 @@ class ARQ_saw(Sublayer):
         self.FSM(TIMEOUT, None)
 
 
-    def send(self, data):
+    def send(self, data, proto):
         '''Recebe os octetos da camada superior, cria um quadro de dados
         com os campos necessários e envia para a camada inferior'''
-        self.last_frame.get_data_frame(self.tx, self.id_proto, data)
+        if proto == IPV4:
+            proto = 1
+        else:
+            proto = 2
+        self.last_frame.get_data_frame(self.tx, proto, data)
         self.FSM(SEND, self.last_frame)
 
 
@@ -77,7 +83,9 @@ class ARQ_saw(Sublayer):
         elif id == RECEIVE and frame.type == DATA:
             # print('RECEBE DATA', frame.header)
             if frame.seq == self.rx:
-                self.upperLayer.receive(frame.msg)
+                if frame.id_proto == 1:
+                    self.upperLayer.receive(frame.msg, IPV4)
+                else: self.upperLayer.receive(frame.msg, IPV6)
                 frame.get_ack_frame(self.rx)
                 self.rx = int(not self.rx)
             else:
@@ -97,7 +105,9 @@ class ARQ_saw(Sublayer):
         elif id == RECEIVE and frame.type == DATA:
             # print('RECEBE DATA WAIT', frame.header)
             if frame.seq == self.rx:
-                self.upperLayer.receive(frame.msg)
+                if frame.id_proto == 1:
+                    self.upperLayer.receive(frame.msg, IPV4)
+                else: self.upperLayer.receive(frame.msg, IPV6)
                 frame.get_ack_frame(self.rx)
                 self.rx = int(not self.rx)
             else:
@@ -129,7 +139,9 @@ class ARQ_saw(Sublayer):
         elif id == RECEIVE and frame.type == DATA:
             # print('RECEBE DATA', frame.header)
             if frame.seq == self.rx:
-                self.upperLayer.receive(frame.msg)
+                if frame.id_proto == 1:
+                    self.upperLayer.receive(frame.msg, IPV4)
+                else: self.upperLayer.receive(frame.msg, IPV6)
                 frame.get_ack_frame(self.rx)
                 self.rx = int(not self.rx)
             else:
@@ -147,7 +159,9 @@ class ARQ_saw(Sublayer):
         elif id == RECEIVE and frame.type == DATA:
             # print('RECEBE DATA ON_HOLD', frame.header)
             if frame.seq == self.rx:
-                self.upperLayer.receive(frame.msg)
+                if frame.id_proto == 1:
+                    self.upperLayer.receive(frame.msg, IPV4)
+                else: self.upperLayer.receive(frame.msg, IPV6)
                 frame.get_ack_frame(self.rx)
                 self.rx = int(not self.rx)
             else:
