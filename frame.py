@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-MAX_BYTES = 128
-
 class Frame:
 
     def __init__(self):

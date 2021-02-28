@@ -6,8 +6,6 @@ import time
 import argparse
 from poller import Callback
 from serial import Serial
-from application import Application
-from application_keyboard import ApplicationKeyboard
 from framing import Framing
 from arq_saw import ARQ_saw
 from tun import Tun

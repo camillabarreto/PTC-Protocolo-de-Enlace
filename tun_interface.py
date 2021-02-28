@@ -8,15 +8,7 @@ from frame import Frame
 from tun import Tun
 import sys
 
-'''A subcamada Application é responsável por transmitir
-e receber mensagens do usuário. Na transmissão (def handle) 
-serão lidos octetos da entrada padrão e enviados para a subcamada 
-inferior. Na recepção (def receive) a mensagem será decodificada 
-e apresentada na saída padrão. '''
-
-# Frame size limit
-MAX_BYTES = 128
-
+'''Adicionar descrição'''
 
 class Tun_Interface(Sublayer):
 
