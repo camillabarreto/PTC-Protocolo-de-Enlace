@@ -18,7 +18,7 @@ FLAG = 0x7E  # ~
 ESC = 0x7D  # }
 
 # Frame size limit
-MAX_BYTES = 128 + 3     # cabeçalhos ARQ: control, id_proto, reservado
+MAX_BYTES = 1024
 
 
 '''A subcamada Framing é resposável por tratar as transmissões
@@ -68,12 +68,8 @@ class Framing(Sublayer):
         if (byte[0] == FLAG):
             self.current_state = INIT
             self.enable_timeout()
-            
-        return False
 
     def init(self, byte):
-        self.reload_timeout()
-
         if (byte[0] == FLAG):
             self.current_state = INIT
 
@@ -88,11 +84,10 @@ class Framing(Sublayer):
             self.buffer.clear()
             self.current_state = IDLE
             self.disable_timeout()
-
-        return False
+        
+        self.reload_timeout()
 
     def read(self, byte):
-        self.reload_timeout()
         if (byte[0] == FLAG):
             self.current_state = IDLE
             self.disable_timeout()
@@ -108,16 +103,16 @@ class Framing(Sublayer):
         elif (len(self.buffer) <= MAX_BYTES):
             self.buffer.append(byte[0])
             self.current_state = READ
+        
         else:
             print('2 OVERFLOW! A mensagem tem', MAX_BYTES, 'bytes.')
             self.buffer.clear()
             self.current_state = IDLE
             self.disable_timeout()
-
-        return False
+        
+        self.reload_timeout()
 
     def escape(self, byte):
-        self.reload_timeout()
         if (byte[0] == FLAG or byte[0] == ESC):
             self.buffer.clear()
             self.disable_timeout()
@@ -127,13 +122,14 @@ class Framing(Sublayer):
             byte = byte[0] ^ 0x20
             self.buffer.append(byte)
             self.current_state = READ
+
         else:
             print('3 OVERFLOW! A mensagem tem', MAX_BYTES, 'bytes.')
             self.buffer.clear()
             self.current_state = IDLE
             self.disable_timeout()
 
-        return False
+        self.reload_timeout()
 
     def send(self, fr):
         '''Recebe os octetos da camada superior, trata os dados
