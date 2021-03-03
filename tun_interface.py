@@ -20,8 +20,8 @@ class Tun_Interface(Sublayer):
     def handle(self):
         '''Adicionar descrição'''
         proto,pkg = self.tun.get_frame() # tun visualiza o usuário como origem
-        print("proto: ", proto)
-        print("pkg: ", pkg)
+        #print("proto: ", proto)
+        #print("pkg: ", pkg)
         self.lowerLayer.send(pkg, proto)
 
     def receive(self, msg, proto):
