@@ -12,9 +12,6 @@ serão lidos octetos da entrada padrão e enviados para a subcamada
 inferior. Na recepção (def receive) a mensagem será decodificada 
 e apresentada na saída padrão. '''
 
-# Frame size limit
-MAX_BYTES = 128
-
 
 class ApplicationKeyboard(Sublayer):
 
@@ -24,14 +21,14 @@ class ApplicationKeyboard(Sublayer):
         self.disable_timeout()
 
     def handle(self):
-        '''Lê os octetos do arquivo e envia 
+        '''Lê os octetos da entrada padrão e envia 
         para a camada inferior '''
         
         msg = sys.stdin.buffer.readline()
-        self.lowerLayer.send(msg)
+        self.lowerLayer.send(msg, 2)
 
-    def receive(self, msg):
+    def receive(self, msg, proto):
         '''Recebe os octetos da camada inferior
         e apresenta no terminal '''
     
-        print('mensagem: ', msg.decode('utf-8')[:-1])
+        print('Mensagem: ', msg[:-1])

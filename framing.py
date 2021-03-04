@@ -20,18 +20,30 @@ ESC = 0x7D  # }
 # Frame size limit
 MAX_BYTES = 1024
 
+# Background Colors
+# RED = '\033[41m'
+# YELLOW = '\033[43m'
+# GREEN = '\033[42m'
+# BLUE = '\033[44m'
+# RST = '\033[0;0m'
+
+# Letter Colors
+RED = '\033[31m'
+YELLOW = '\033[33m'
+GREEN = '\033[32m'
+BLUE = '\033[34m'
+RST = '\033[0;0m'
 
 '''A subcamada Framing é resposável por tratar as transmissões
-e recepções de octetos pela porta serial. Na transmissão (def send) 
-será anexado aos octetos um valor de FCS e realizado o enquadramento.
-Na recepção (def handle) será feito o desenquadramento, checagem da 
-integridade dos octetos e remoção do valor de FCS. A recepção será 
-interrompida quando atingir um limite de tempo (def handle_timeout)
-e os octetos serão descartados'''
+e recepções de octetos pela porta serial através do mecanismo de sentinela.
+Na transmissão (def send) será anexado aos octetos um valor de FCS
+e realizado o enquadramento. Na recepção (def handle) será feito o desenquadramento,
+checagem da integridade dos octetos e remoção do valor de FCS. A recepção será 
+interrompida e os octetos serão descartados quando ocorrer 
+TIMEOUT (def handle_timeout) ou OVERFLOW'''
 
 
 class Framing(Sublayer):
-
     def __init__(self, serial_port: Serial, tout: float):
         Sublayer.__init__(self, serial_port, tout)
         self.buffer = bytearray()
@@ -45,6 +57,8 @@ class Framing(Sublayer):
         }
 
     def handle(self):
+        '''Recebe byte pela porta serial e repassa à FSM fazer o tratamento 
+        pertinente ao estado em que se encontra'''
         byte = self.fd.read()  # Lendo 1 octeto da porta serial
         result = self.FSM(byte)  # FSM retorna True para recepção bem sucedida
         if (result):
@@ -54,11 +68,12 @@ class Framing(Sublayer):
             self.buffer.clear()
 
     def handle_timeout(self):
-        '''Trata um timeout associado a este callback'''
+        '''Ao atingir um limite de espera pelo próximo byte
+        os dados do buffer são descartados e se aguarda pelo próximo frame'''
         self.buffer.clear()
         self.current_state = IDLE
         self.disable_timeout()
-        print('TIMEOUT!')
+        print(YELLOW+'TIMEOUT!'+RST+' Enquadramento')
 
     def FSM(self, byte):
         func = self.switch[self.current_state]
@@ -76,11 +91,12 @@ class Framing(Sublayer):
         elif (byte[0] == ESC):
             self.current_state = ESCAPE
 
-        elif (len(self.buffer) <= MAX_BYTES):
+        elif (len(self.buffer) < MAX_BYTES):
             self.buffer.append(byte[0])
             self.current_state = READ
+
         else:
-            print('1 OVERFLOW! A mensagem tem', MAX_BYTES, 'bytes.')
+            print(BLUE+'1 OVERFLOW!'+RST+' A mensagem tem mais que', MAX_BYTES, 'bytes.')
             self.buffer.clear()
             self.current_state = IDLE
             self.disable_timeout()
@@ -92,20 +108,24 @@ class Framing(Sublayer):
             self.current_state = IDLE
             self.disable_timeout()
             fcs = crc.CRC16(self.buffer)
+
             if fcs.check_crc():
                 self.buffer = self.buffer[:-2]
                 return True
-            else: self.buffer.clear()
+
+            else: 
+                self.buffer.clear()
+                print(RED+'DETECÇÃO DE ERRO!'+RST)
 
         elif (byte[0] == ESC):
             self.current_state = ESCAPE
 
-        elif (len(self.buffer) <= MAX_BYTES):
+        elif (len(self.buffer) < MAX_BYTES):
             self.buffer.append(byte[0])
             self.current_state = READ
         
         else:
-            print('2 OVERFLOW! A mensagem tem', MAX_BYTES, 'bytes.')
+            print(BLUE+'2 OVERFLOW!'+RST+' A mensagem tem mais que', len(self.buffer), 'bytes.')
             self.buffer.clear()
             self.current_state = IDLE
             self.disable_timeout()
@@ -118,13 +138,13 @@ class Framing(Sublayer):
             self.disable_timeout()
             self.current_state = IDLE
 
-        elif (len(self.buffer) <= MAX_BYTES):
+        elif (len(self.buffer) < MAX_BYTES):
             byte = byte[0] ^ 0x20
             self.buffer.append(byte)
             self.current_state = READ
 
         else:
-            print('3 OVERFLOW! A mensagem tem', MAX_BYTES, 'bytes.')
+            print(BLUE+'3 OVERFLOW! A mensagem tem mais que', MAX_BYTES, 'bytes.'+RST)
             self.buffer.clear()
             self.current_state = IDLE
             self.disable_timeout()
@@ -132,8 +152,8 @@ class Framing(Sublayer):
         self.reload_timeout()
 
     def send(self, fr):
-        '''Recebe os octetos da camada superior, trata os dados
-        e envia pela porta serial '''
+        '''Recebe octetos da camada superior, anexa dados de verificação de erro,
+        realiza o preenchimento de byte e envia pela porta serial'''
 
         fcs = crc.CRC16(fr.header)
         fr.header = fcs.gen_crc()
