@@ -23,13 +23,6 @@ ACK = 1
 IPV4 = 0x800
 IPV6 = 0x86dd
 
-# # Background Colors
-# RED = '\033[41m'
-# YELLOW = '\033[43m'
-# GREEN = '\033[42m'
-# BLUE = '\033[44m'
-# RST = '\033[0;0m'
-
 # Letter Colors
 RED = '\033[31m'
 YELLOW = '\033[33m'

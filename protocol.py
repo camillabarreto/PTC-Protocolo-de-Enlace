@@ -19,9 +19,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Programa de Demonstração')
     requiredNamed = parser.add_argument_group('required arguments')
     requiredNamed.add_argument('-s', help='Porta serial utilizada na comunicação', type=str, dest='path', required=True, default="")
-    group = requiredNamed.add_mutually_exclusive_group(required=True)
-    group.add_argument('-i', action="store", help='IP local e IP remoto', type=str, dest='ip' ,nargs=2, default="")
-    group.add_argument('-K', action='store_true', help='Ler do teclado', dest='k', default=False)
+    requiredNamed.add_argument('-i', action="store", help='IP local e IP remoto', type=str, dest='ip' ,nargs=2, default="")
+    # group = requiredNamed.add_mutually_exclusive_group(required=True)
+    # group.add_argument('-i', action="store", help='IP local e IP remoto', type=str, dest='ip' ,nargs=2, default="")
+    # group.add_argument('-K', action='store_true', help='Ler do teclado', dest='k', default=False)
     args = parser.parse_args()
     
     # Porta serial

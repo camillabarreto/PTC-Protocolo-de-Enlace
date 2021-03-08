@@ -28,7 +28,6 @@ class Tun_Interface(Sublayer):
         '''Recebe pacote e seu protocolo pela interface Tun 
         e repassa para a camada inferior'''
         proto,pkg = self.tun.get_frame()
-        print('>> ENVIANDO: ', int(len(pkg)))
         self.lowerLayer.send(pkg, proto)
 
     def receive(self, msg, proto):
